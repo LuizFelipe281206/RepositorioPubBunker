@@ -1,0 +1,6 @@
+pubbunkerback/target/
+pubbunker-frontend/node_modules/
+pubbunker-frontend/dist/
+.vscode/
+.idea/
+*.log

@@ -1,0 +1,9 @@
+POST http://localhost:8080/produtos
+Content-Type: application/json
+
+{
+      "nome": "Chopp",
+  "descricao": "Pilsen 500ml",
+  "preco": 10.0,
+  "categoria": "bebida"
+}
