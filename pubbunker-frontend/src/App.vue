@@ -7,6 +7,7 @@ const produtos = ref([])
 const carregarProdutos = async () => {
   try {
     const response = await axios.get('http://localhost:8080/produtos')
+    console.log("RESPOSTA:", response.data)
     produtos.value = response.data
   } catch (error) {
     console.error('Erro ao carregar produtos:', error)
