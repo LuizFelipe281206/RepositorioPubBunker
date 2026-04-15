@@ -8,7 +8,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/produtos")
-@CrossOrigin("*") // permite Vue acessar
+@CrossOrigin(origins = "*")
 public class produtoController {
 
     private final produtoService service;
@@ -18,8 +18,13 @@ public class produtoController {
     }
 
     @GetMapping
-    public List<produto> listar() {
+    public List<produto> listarTodos() {
         return service.listarTodos();
+    }
+
+    @GetMapping("/{id}")
+    public produto buscarPorId(@PathVariable Long id) {
+        return service.buscarPorId(id);
     }
 
     @PostMapping

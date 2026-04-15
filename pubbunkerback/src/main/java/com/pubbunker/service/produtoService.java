@@ -19,16 +19,32 @@ public class produtoService {
         return repository.findAll();
     }
 
+    public produto buscarPorId(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Produto não encontrado com id: " + id));
+    }
+
     public produto salvar(produto produto) {
+        if (produto.getAtivo() == null) {
+            produto.setAtivo(true);
+        }
         return repository.save(produto);
+    }
+
+    public produto atualizar(Long id, produto produtoAtualizado) {
+        produto produtoExistente = buscarPorId(id);
+
+        produtoExistente.setNome(produtoAtualizado.getNome());
+        produtoExistente.setDescricao(produtoAtualizado.getDescricao());
+        produtoExistente.setPreco(produtoAtualizado.getPreco());
+        produtoExistente.setCategoria(produtoAtualizado.getCategoria());
+        produtoExistente.setAtivo(produtoAtualizado.getAtivo());
+
+        return repository.save(produtoExistente);
     }
 
     public void deletar(Long id) {
-        repository.deleteById(id);
-    }
-
-    public produto atualizar(Long id, produto produto) {
-        produto.setId(id);
-        return repository.save(produto);
+        produto produto = buscarPorId(id);
+        repository.delete(produto);
     }
 }
