@@ -6,6 +6,7 @@ const API_URL = 'http://localhost:8080/produtos'
 const AUTH_URL = 'http://localhost:8080/auth/login'
 
 const produtos = ref([])
+const carrinho = ref([])
 
 const editando = ref(false)
 const idEditando = ref(null)
@@ -28,10 +29,15 @@ const form = ref({
 })
 
 const carregarProdutos = async () => {
+
   try {
+
     const response = await axios.get(API_URL)
+
     produtos.value = response.data
+
   } catch (error) {
+
     console.error('Erro ao carregar produtos:', error)
   }
 }
@@ -48,8 +54,15 @@ const login = async () => {
       }
     )
 
-    localStorage.setItem('role', response.data.role)
-    localStorage.setItem('nome', response.data.nome)
+    localStorage.setItem(
+      'role',
+      response.data.role
+    )
+
+    localStorage.setItem(
+      'nome',
+      response.data.nome
+    )
 
     role.value = response.data.role
     nomeUsuario.value = response.data.nome
@@ -75,18 +88,24 @@ const logout = () => {
 
 const verificarLogin = () => {
 
-  const roleStorage = localStorage.getItem('role')
-  const nomeStorage = localStorage.getItem('nome')
+  const roleStorage =
+    localStorage.getItem('role')
+
+  const nomeStorage =
+    localStorage.getItem('nome')
 
   if(roleStorage) {
 
     usuarioLogado.value = true
+
     role.value = roleStorage
+
     nomeUsuario.value = nomeStorage
   }
 }
 
 const limparFormulario = () => {
+
   form.value = {
     nome: '',
     descricao: '',
@@ -102,7 +121,11 @@ const limparFormulario = () => {
 const salvarProduto = async () => {
 
   if(role.value !== 'ADMIN') {
-    alert('Apenas administradores podem cadastrar produtos')
+
+    alert(
+      'Apenas administradores podem cadastrar produtos'
+    )
+
     return
   }
 
@@ -125,22 +148,33 @@ const salvarProduto = async () => {
 
     } else {
 
-      await axios.post(API_URL, payload)
+      await axios.post(
+        API_URL,
+        payload
+      )
     }
 
     await carregarProdutos()
+
     limparFormulario()
 
   } catch (error) {
 
-    console.error('Erro ao salvar produto:', error)
+    console.error(
+      'Erro ao salvar produto:',
+      error
+    )
   }
 }
 
 const editarProduto = (produto) => {
 
   if(role.value !== 'ADMIN') {
-    alert('Apenas administradores podem editar produtos')
+
+    alert(
+      'Apenas administradores podem editar produtos'
+    )
+
     return
   }
 
@@ -159,25 +193,71 @@ const editarProduto = (produto) => {
 const excluirProduto = async (id) => {
 
   if(role.value !== 'ADMIN') {
-    alert('Apenas administradores podem excluir produtos')
+
+    alert(
+      'Apenas administradores podem excluir produtos'
+    )
+
     return
   }
 
   try {
 
-    await axios.delete(`${API_URL}/${id}`)
+    await axios.delete(
+      `${API_URL}/${id}`
+    )
 
     await carregarProdutos()
 
   } catch (error) {
 
-    console.error('Erro ao excluir produto:', error)
+    console.error(
+      'Erro ao excluir produto:',
+      error
+    )
+  }
+}
+
+const adicionarCarrinho = (produto) => {
+
+  carrinho.value.push(produto)
+
+  alert('Produto adicionado!')
+}
+
+const finalizarPedido = async () => {
+
+  try {
+
+    const produtosIds =
+      carrinho.value.map(
+        produto => produto.id
+      )
+
+    await axios.post(
+      'http://localhost:8080/pedidos',
+      {
+        clienteId: 3,
+        produtosIds: produtosIds
+      }
+    )
+
+    alert('Pedido realizado!')
+
+    carrinho.value = []
+
+  } catch(error) {
+
+    console.error(error)
+
+    alert('Erro ao finalizar pedido')
   }
 }
 
 onMounted(() => {
 
   verificarLogin()
+
   carregarProdutos()
 })
 </script>
@@ -186,7 +266,10 @@ onMounted(() => {
 
   <div class="container">
 
-    <div v-if="!usuarioLogado" class="login-box">
+    <div
+      v-if="!usuarioLogado"
+      class="login-box"
+    >
 
       <h1>Login</h1>
 
@@ -213,24 +296,40 @@ onMounted(() => {
       <div class="topo">
 
         <div>
+
           <h1>PubBunker</h1>
+
           <p>
             Bem-vindo,
-            <strong>{{ nomeUsuario }}</strong>
+            <strong>
+              {{ nomeUsuario }}
+            </strong>
+
             ({{ role }})
           </p>
+
         </div>
 
-        <button class="btn-logout" @click="logout">
+        <button
+          class="btn-logout"
+          @click="logout"
+        >
           Logout
         </button>
 
       </div>
 
-      <div v-if="role === 'ADMIN'" class="formulario">
+      <div
+        v-if="role === 'ADMIN'"
+        class="formulario"
+      >
 
         <h2>
-          {{ editando ? 'Editar Produto' : 'Cadastrar Produto' }}
+          {{
+            editando
+            ? 'Editar Produto'
+            : 'Cadastrar Produto'
+          }}
         </h2>
 
         <input
@@ -290,6 +389,7 @@ onMounted(() => {
           </button>
 
         </div>
+
       </div>
 
       <div class="lista">
@@ -322,12 +422,10 @@ onMounted(() => {
             {{ produto.ativo ? 'Sim' : 'Não' }}
           </p>
 
-          <div
-            v-if="role === 'ADMIN'"
-            class="acoes-card"
-          >
+          <div class="acoes-card">
 
             <button
+              v-if="role === 'ADMIN'"
               class="btn-editar"
               @click="editarProduto(produto)"
             >
@@ -335,15 +433,50 @@ onMounted(() => {
             </button>
 
             <button
+              v-if="role === 'ADMIN'"
               class="btn-excluir"
               @click="excluirProduto(produto.id)"
             >
               Excluir
             </button>
 
+            <button
+              v-if="role === 'CLIENTE'"
+              class="btn-pedido"
+              @click="adicionarCarrinho(produto)"
+            >
+              Adicionar ao Pedido
+            </button>
+
           </div>
 
         </div>
+
+      </div>
+
+      <div
+        v-if="role === 'CLIENTE'"
+        class="carrinho"
+      >
+
+        <h2>Seu Pedido</h2>
+
+        <div
+          v-for="produto in carrinho"
+          :key="produto.id"
+        >
+
+          {{ produto.nome }}
+          - R$ {{ produto.preco }}
+
+        </div>
+
+        <button
+          class="btn-finalizar"
+          @click="finalizarPedido"
+        >
+          Finalizar Pedido
+        </button>
 
       </div>
 
@@ -442,7 +575,10 @@ button {
 
 .lista {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(260px, 1fr)
+  );
   gap: 16px;
 }
 
@@ -470,6 +606,24 @@ button {
 
 .btn-excluir {
   background: #d9534f;
+  color: white;
+}
+
+.btn-pedido {
+  background: #5cb85c;
+  color: white;
+}
+
+.carrinho {
+  margin-top: 24px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.btn-finalizar {
+  margin-top: 12px;
+  background: #0275d8;
   color: white;
 }
 </style>
