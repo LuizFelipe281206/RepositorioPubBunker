@@ -3,10 +3,21 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
 const API_URL = 'http://localhost:8080/produtos'
+const AUTH_URL = 'http://localhost:8080/auth/login'
 
 const produtos = ref([])
+
 const editando = ref(false)
 const idEditando = ref(null)
+
+const usuarioLogado = ref(false)
+const role = ref('')
+const nomeUsuario = ref('')
+
+const loginForm = ref({
+  email: '',
+  senha: ''
+})
 
 const form = ref({
   nome: '',
@@ -25,6 +36,56 @@ const carregarProdutos = async () => {
   }
 }
 
+const login = async () => {
+
+  try {
+
+    const response = await axios.post(
+      AUTH_URL,
+      {
+        email: loginForm.value.email,
+        senha: loginForm.value.senha
+      }
+    )
+
+    localStorage.setItem('role', response.data.role)
+    localStorage.setItem('nome', response.data.nome)
+
+    role.value = response.data.role
+    nomeUsuario.value = response.data.nome
+    usuarioLogado.value = true
+
+    alert('Login realizado com sucesso!')
+
+  } catch (error) {
+
+    alert('Email ou senha inválidos')
+  }
+}
+
+const logout = () => {
+
+  localStorage.removeItem('role')
+  localStorage.removeItem('nome')
+
+  usuarioLogado.value = false
+  role.value = ''
+  nomeUsuario.value = ''
+}
+
+const verificarLogin = () => {
+
+  const roleStorage = localStorage.getItem('role')
+  const nomeStorage = localStorage.getItem('nome')
+
+  if(roleStorage) {
+
+    usuarioLogado.value = true
+    role.value = roleStorage
+    nomeUsuario.value = nomeStorage
+  }
+}
+
 const limparFormulario = () => {
   form.value = {
     nome: '',
@@ -33,12 +94,20 @@ const limparFormulario = () => {
     categoria: '',
     ativo: true
   }
+
   editando.value = false
   idEditando.value = null
 }
 
 const salvarProduto = async () => {
+
+  if(role.value !== 'ADMIN') {
+    alert('Apenas administradores podem cadastrar produtos')
+    return
+  }
+
   try {
+
     const payload = {
       nome: form.value.nome,
       descricao: form.value.descricao,
@@ -47,20 +116,34 @@ const salvarProduto = async () => {
       ativo: form.value.ativo
     }
 
-    if (editando.value) {
-      await axios.put(`${API_URL}/${idEditando.value}`, payload)
+    if(editando.value) {
+
+      await axios.put(
+        `${API_URL}/${idEditando.value}`,
+        payload
+      )
+
     } else {
+
       await axios.post(API_URL, payload)
     }
 
     await carregarProdutos()
     limparFormulario()
+
   } catch (error) {
+
     console.error('Erro ao salvar produto:', error)
   }
 }
 
 const editarProduto = (produto) => {
+
+  if(role.value !== 'ADMIN') {
+    alert('Apenas administradores podem editar produtos')
+    return
+  }
+
   form.value = {
     nome: produto.nome,
     descricao: produto.descricao,
@@ -68,65 +151,206 @@ const editarProduto = (produto) => {
     categoria: produto.categoria,
     ativo: produto.ativo
   }
+
   editando.value = true
   idEditando.value = produto.id
 }
 
 const excluirProduto = async (id) => {
+
+  if(role.value !== 'ADMIN') {
+    alert('Apenas administradores podem excluir produtos')
+    return
+  }
+
   try {
+
     await axios.delete(`${API_URL}/${id}`)
+
     await carregarProdutos()
+
   } catch (error) {
+
     console.error('Erro ao excluir produto:', error)
   }
 }
 
 onMounted(() => {
+
+  verificarLogin()
   carregarProdutos()
 })
 </script>
 
 <template>
+
   <div class="container">
-    <h1>Gerenciar Cardápio</h1>
 
-    <div class="formulario">
-      <input v-model="form.nome" type="text" placeholder="Nome do produto" />
-      <input v-model="form.descricao" type="text" placeholder="Descrição" />
-      <input v-model="form.preco" type="number" step="0.01" placeholder="Preço" />
-      <input v-model="form.categoria" type="text" placeholder="Categoria" />
+    <div v-if="!usuarioLogado" class="login-box">
 
-      <label class="checkbox">
-        <input v-model="form.ativo" type="checkbox" />
-        Ativo
-      </label>
+      <h1>Login</h1>
 
-      <div class="acoes-form">
-        <button @click="salvarProduto">
-          {{ editando ? 'Atualizar Produto' : 'Cadastrar Produto' }}
-        </button>
+      <input
+        v-model="loginForm.email"
+        type="text"
+        placeholder="Email"
+      />
 
-        <button v-if="editando" class="btn-cancelar" @click="limparFormulario">
-          Cancelar
-        </button>
-      </div>
+      <input
+        v-model="loginForm.senha"
+        type="password"
+        placeholder="Senha"
+      />
+
+      <button @click="login">
+        Entrar
+      </button>
+
     </div>
 
-    <div class="lista">
-      <div class="card" v-for="produto in produtos" :key="produto.id">
-        <h2>{{ produto.nome }}</h2>
-        <p><strong>Descrição:</strong> {{ produto.descricao }}</p>
-        <p><strong>Preço:</strong> R$ {{ produto.preco }}</p>
-        <p><strong>Categoria:</strong> {{ produto.categoria }}</p>
-        <p><strong>Ativo:</strong> {{ produto.ativo ? 'Sim' : 'Não' }}</p>
+    <div v-else>
 
-        <div class="acoes-card">
-          <button class="btn-editar" @click="editarProduto(produto)">Editar</button>
-          <button class="btn-excluir" @click="excluirProduto(produto.id)">Excluir</button>
+      <div class="topo">
+
+        <div>
+          <h1>PubBunker</h1>
+          <p>
+            Bem-vindo,
+            <strong>{{ nomeUsuario }}</strong>
+            ({{ role }})
+          </p>
+        </div>
+
+        <button class="btn-logout" @click="logout">
+          Logout
+        </button>
+
+      </div>
+
+      <div v-if="role === 'ADMIN'" class="formulario">
+
+        <h2>
+          {{ editando ? 'Editar Produto' : 'Cadastrar Produto' }}
+        </h2>
+
+        <input
+          v-model="form.nome"
+          type="text"
+          placeholder="Nome do produto"
+        />
+
+        <input
+          v-model="form.descricao"
+          type="text"
+          placeholder="Descrição"
+        />
+
+        <input
+          v-model="form.preco"
+          type="number"
+          step="0.01"
+          placeholder="Preço"
+        />
+
+        <input
+          v-model="form.categoria"
+          type="text"
+          placeholder="Categoria"
+        />
+
+        <label class="checkbox">
+
+          <input
+            v-model="form.ativo"
+            type="checkbox"
+          />
+
+          Ativo
+
+        </label>
+
+        <div class="acoes-form">
+
+          <button @click="salvarProduto">
+
+            {{
+              editando
+              ? 'Atualizar Produto'
+              : 'Cadastrar Produto'
+            }}
+
+          </button>
+
+          <button
+            v-if="editando"
+            class="btn-cancelar"
+            @click="limparFormulario"
+          >
+            Cancelar
+          </button>
+
         </div>
       </div>
+
+      <div class="lista">
+
+        <div
+          class="card"
+          v-for="produto in produtos"
+          :key="produto.id"
+        >
+
+          <h2>{{ produto.nome }}</h2>
+
+          <p>
+            <strong>Descrição:</strong>
+            {{ produto.descricao }}
+          </p>
+
+          <p>
+            <strong>Preço:</strong>
+            R$ {{ produto.preco }}
+          </p>
+
+          <p>
+            <strong>Categoria:</strong>
+            {{ produto.categoria }}
+          </p>
+
+          <p>
+            <strong>Ativo:</strong>
+            {{ produto.ativo ? 'Sim' : 'Não' }}
+          </p>
+
+          <div
+            v-if="role === 'ADMIN'"
+            class="acoes-card"
+          >
+
+            <button
+              class="btn-editar"
+              @click="editarProduto(produto)"
+            >
+              Editar
+            </button>
+
+            <button
+              class="btn-excluir"
+              @click="excluirProduto(produto.id)"
+            >
+              Excluir
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
+
   </div>
+
 </template>
 
 <style>
@@ -146,9 +370,32 @@ body {
   padding: 24px;
 }
 
-h1 {
-  text-align: center;
-  margin-bottom: 24px;
+.login-box {
+  max-width: 400px;
+  margin: 80px auto;
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.login-box input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-logout {
+  background: #444;
+  color: white;
 }
 
 .formulario {
@@ -156,7 +403,7 @@ h1 {
   padding: 20px;
   border-radius: 12px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .formulario input[type="text"],
@@ -203,7 +450,7 @@ button {
   background: white;
   padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .card h2 {
