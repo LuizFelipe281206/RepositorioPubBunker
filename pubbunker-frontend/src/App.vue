@@ -28,6 +28,21 @@ const form = ref({
   ativo: true
 })
 
+const adicionarAoPedido = (produto) => {
+
+  carrinho.value.push(produto)
+}
+
+const removerDoPedido = (index) => {
+
+  carrinho.value.splice(index, 1)
+}
+
+const cancelarPedido = () => {
+
+  carrinho.value = []
+}
+
 const carregarProdutos = async () => {
 
   try {
@@ -266,221 +281,240 @@ onMounted(() => {
 
   <div class="container">
 
-    <div
-      v-if="!usuarioLogado"
-      class="login-box"
+```
+<div
+  v-if="!usuarioLogado"
+  class="login-box"
+>
+
+  <h1>Login</h1>
+
+  <input
+    v-model="loginForm.email"
+    type="text"
+    placeholder="Email"
+  />
+
+  <input
+    v-model="loginForm.senha"
+    type="password"
+    placeholder="Senha"
+  />
+
+  <button @click="login">
+    Entrar
+  </button>
+
+</div>
+
+<div v-else>
+
+  <div class="topo">
+
+    <div>
+
+      <h1>PubBunker</h1>
+
+      <p>
+        Bem-vindo,
+        <strong>
+          {{ nomeUsuario }}
+        </strong>
+
+        ({{ role }})
+      </p>
+
+    </div>
+
+    <button
+      class="btn-logout"
+      @click="logout"
     >
+      Logout
+    </button>
 
-      <h1>Login</h1>
+  </div>
+
+  <div
+    v-if="role === 'ADMIN'"
+    class="formulario"
+  >
+
+    <h2>
+      {{
+        editando
+        ? 'Editar Produto'
+        : 'Cadastrar Produto'
+      }}
+    </h2>
+
+    <input
+      v-model="form.nome"
+      type="text"
+      placeholder="Nome do produto"
+    />
+
+    <input
+      v-model="form.descricao"
+      type="text"
+      placeholder="Descrição"
+    />
+
+    <input
+      v-model="form.preco"
+      type="number"
+      step="0.01"
+      placeholder="Preço"
+    />
+
+    <input
+      v-model="form.categoria"
+      type="text"
+      placeholder="Categoria"
+    />
+
+    <label class="checkbox">
 
       <input
-        v-model="loginForm.email"
-        type="text"
-        placeholder="Email"
+        v-model="form.ativo"
+        type="checkbox"
       />
 
-      <input
-        v-model="loginForm.senha"
-        type="password"
-        placeholder="Senha"
-      />
+      Ativo
 
-      <button @click="login">
-        Entrar
+    </label>
+
+    <div class="acoes-form">
+
+      <button @click="salvarProduto">
+
+        {{
+          editando
+          ? 'Atualizar Produto'
+          : 'Cadastrar Produto'
+        }}
+
+      </button>
+
+      <button
+        v-if="editando"
+        class="btn-cancelar"
+        @click="limparFormulario"
+      >
+        Cancelar
       </button>
 
     </div>
 
-    <div v-else>
+  </div>
 
-      <div class="topo">
+  <div class="lista">
 
-        <div>
+    <div
+      class="card"
+      v-for="produto in produtos"
+      :key="produto.id"
+    >
 
-          <h1>PubBunker</h1>
+      <h2>{{ produto.nome }}</h2>
 
-          <p>
-            Bem-vindo,
-            <strong>
-              {{ nomeUsuario }}
-            </strong>
+      <p>
+        <strong>Descrição:</strong>
+        {{ produto.descricao }}
+      </p>
 
-            ({{ role }})
-          </p>
+      <p>
+        <strong>Preço:</strong>
+        R$ {{ produto.preco }}
+      </p>
 
-        </div>
+      <p>
+        <strong>Categoria:</strong>
+        {{ produto.categoria }}
+      </p>
+
+      <p>
+        <strong>Ativo:</strong>
+        {{ produto.ativo ? 'Sim' : 'Não' }}
+      </p>
+
+      <div class="acoes-card">
 
         <button
-          class="btn-logout"
-          @click="logout"
+          v-if="role === 'ADMIN'"
+          class="btn-editar"
+          @click="editarProduto(produto)"
         >
-          Logout
+          Editar
         </button>
 
-      </div>
-
-      <div
-        v-if="role === 'ADMIN'"
-        class="formulario"
-      >
-
-        <h2>
-          {{
-            editando
-            ? 'Editar Produto'
-            : 'Cadastrar Produto'
-          }}
-        </h2>
-
-        <input
-          v-model="form.nome"
-          type="text"
-          placeholder="Nome do produto"
-        />
-
-        <input
-          v-model="form.descricao"
-          type="text"
-          placeholder="Descrição"
-        />
-
-        <input
-          v-model="form.preco"
-          type="number"
-          step="0.01"
-          placeholder="Preço"
-        />
-
-        <input
-          v-model="form.categoria"
-          type="text"
-          placeholder="Categoria"
-        />
-
-        <label class="checkbox">
-
-          <input
-            v-model="form.ativo"
-            type="checkbox"
-          />
-
-          Ativo
-
-        </label>
-
-        <div class="acoes-form">
-
-          <button @click="salvarProduto">
-
-            {{
-              editando
-              ? 'Atualizar Produto'
-              : 'Cadastrar Produto'
-            }}
-
-          </button>
-
-          <button
-            v-if="editando"
-            class="btn-cancelar"
-            @click="limparFormulario"
-          >
-            Cancelar
-          </button>
-
-        </div>
-
-      </div>
-
-      <div class="lista">
-
-        <div
-          class="card"
-          v-for="produto in produtos"
-          :key="produto.id"
+        <button
+          v-if="role === 'ADMIN'"
+          class="btn-excluir"
+          @click="excluirProduto(produto.id)"
         >
-
-          <h2>{{ produto.nome }}</h2>
-
-          <p>
-            <strong>Descrição:</strong>
-            {{ produto.descricao }}
-          </p>
-
-          <p>
-            <strong>Preço:</strong>
-            R$ {{ produto.preco }}
-          </p>
-
-          <p>
-            <strong>Categoria:</strong>
-            {{ produto.categoria }}
-          </p>
-
-          <p>
-            <strong>Ativo:</strong>
-            {{ produto.ativo ? 'Sim' : 'Não' }}
-          </p>
-
-          <div class="acoes-card">
-
-            <button
-              v-if="role === 'ADMIN'"
-              class="btn-editar"
-              @click="editarProduto(produto)"
-            >
-              Editar
-            </button>
-
-            <button
-              v-if="role === 'ADMIN'"
-              class="btn-excluir"
-              @click="excluirProduto(produto.id)"
-            >
-              Excluir
-            </button>
-
-            <button
-              v-if="role === 'CLIENTE'"
-              class="btn-pedido"
-              @click="adicionarCarrinho(produto)"
-            >
-              Adicionar ao Pedido
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      <div
-        v-if="role === 'CLIENTE'"
-        class="carrinho"
-      >
-
-        <h2>Seu Pedido</h2>
-
-        <div
-          v-for="produto in carrinho"
-          :key="produto.id"
-        >
-
-          {{ produto.nome }}
-          - R$ {{ produto.preco }}
-
-        </div>
+          Excluir
+        </button>
 
         <button
-          class="btn-finalizar"
-          @click="finalizarPedido"
+          v-if="role === 'CLIENTE'"
+          class="btn-pedido"
+          @click="adicionarCarrinho(produto)"
         >
-          Finalizar Pedido
+          Adicionar ao Pedido
         </button>
 
       </div>
 
     </div>
+
+  </div>
+
+  <div
+    v-if="role === 'CLIENTE'"
+    class="carrinho"
+  >
+
+    <h2>Seu Pedido</h2>
+
+    <div
+      v-for="(produto, index) in carrinho"
+      :key="index"
+      class="item-carrinho"
+    >
+
+      <span>
+        {{ produto.nome }}
+        - R$ {{ produto.preco }}
+      </span>
+
+      <button
+        class="btn-remover"
+        @click="removerDoPedido(index)"
+      >
+        Remover
+      </button>
+
+    </div>
+
+    <button
+      class="btn-finalizar"
+      @click="finalizarPedido"
+    >
+      Finalizar Pedido
+    </button>
+
+    <button
+      class="btn-cancelar-pedido"
+      @click="cancelarPedido"
+    >
+      Cancelar Pedido
+    </button>
+
+  </div>
+
+</div>
+```
 
   </div>
 
@@ -624,6 +658,24 @@ button {
 .btn-finalizar {
   margin-top: 12px;
   background: #0275d8;
+  color: white;
+}
+
+.item-carrinho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.btn-remover {
+  background: #d9534f;
+  color: white;
+}
+
+.btn-cancelar-pedido {
+  margin-left: 10px;
+  background: #777;
   color: white;
 }
 </style>
