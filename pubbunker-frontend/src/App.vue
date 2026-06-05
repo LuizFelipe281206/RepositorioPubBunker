@@ -250,10 +250,11 @@ const editarProduto = (produto) => {
 
   if(role.value !== 'ADMIN') {
 
-    alert(
-      'Apenas administradores podem editar produtos'
+    abrirPopup(
+        'Acesso negado',
+        'Apenas administradores podem editar produtos.',
+        'erro'
     )
-
     return
   }
 
@@ -305,7 +306,11 @@ const adicionarCarrinho = (produto) => {
 
   carrinho.value.push(produto)
 
-  alert('Produto adicionado!')
+  abrirPopup(
+      'Produto adicionado',
+      `${produto.nome} foi adicionado ao pedido.`,
+      'sucesso'
+  )
 }
 
 const finalizarPedido = async () => {
@@ -325,16 +330,22 @@ const finalizarPedido = async () => {
       }
     )
 
-    alert('Pedido realizado!')
-
+    abrirPopup(
+        'Pedido realizado',
+        'Seu pedido foi enviado com sucesso.',
+        'sucesso'
+    )
     carrinho.value = []
 
   } catch(error) {
 
     console.error(error)
 
-    alert('Erro ao finalizar pedido')
-  }
+    abrirPopup(
+        'Erro',
+        'Não foi possível finalizar o pedido.',
+        'erro'
+    )  }
 }
 
 onMounted(() => {
