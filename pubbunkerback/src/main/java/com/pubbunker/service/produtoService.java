@@ -45,6 +45,7 @@ public class produtoService {
 
     public void deletar(Long id) {
         produto produto = buscarPorId(id);
-        repository.delete(produto);
+        produto.setAtivo(false);
+        repository.save(produto);
     }
 }

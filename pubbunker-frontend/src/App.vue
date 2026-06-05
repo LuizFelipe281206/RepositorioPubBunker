@@ -70,10 +70,10 @@ const carregarProdutos = async () => {
 
     const response = await axios.get(API_URL)
 
-    produtos.value = response.data
-
+    produtos.value = response.data.filter(
+        produto => produto.ativo === true
+    )
   } catch (error) {
-
     console.error('Erro ao carregar produtos:', error)
   }
 }
@@ -118,6 +118,11 @@ const logout = () => {
   usuarioLogado.value = false
   role.value = ''
   nomeUsuario.value = ''
+
+  loginForm.value = {
+    email: '',
+    senha: ''
+  }
 }
 
 const verificarLogin = () => {
@@ -155,11 +160,34 @@ const limparFormulario = () => {
 const salvarProduto = async () => {
 
   if(role.value !== 'ADMIN') {
-
-    alert(
-      'Apenas administradores podem cadastrar produtos'
+    abrirPopup(
+        'Acesso negado',
+        'Apenas administradores podem cadastrar produtos.',
+        'erro'
     )
+    return
+  }
 
+  if(
+      !form.value.nome ||
+      !form.value.descricao ||
+      !form.value.preco ||
+      !form.value.categoria
+  ) {
+    abrirPopup(
+        'Campos obrigatórios',
+        'Preencha nome, descrição, preço e categoria antes de salvar.',
+        'erro'
+    )
+    return
+  }
+
+  if(Number(form.value.preco) <= 0) {
+    abrirPopup(
+        'Preço inválido',
+        'O preço do produto deve ser maior que zero.',
+        'erro'
+    )
     return
   }
 
@@ -176,15 +204,27 @@ const salvarProduto = async () => {
     if(editando.value) {
 
       await axios.put(
-        `${API_URL}/${idEditando.value}`,
-        payload
+          `${API_URL}/${idEditando.value}`,
+          payload
+      )
+
+      abrirPopup(
+          'Produto atualizado',
+          'O produto foi atualizado com sucesso.',
+          'sucesso'
       )
 
     } else {
 
       await axios.post(
-        API_URL,
-        payload
+          API_URL,
+          payload
+      )
+
+      abrirPopup(
+          'Produto cadastrado',
+          'O produto foi cadastrado com sucesso.',
+          'sucesso'
       )
     }
 
@@ -195,12 +235,17 @@ const salvarProduto = async () => {
   } catch (error) {
 
     console.error(
-      'Erro ao salvar produto:',
-      error
+        'Erro ao salvar produto:',
+        error
+    )
+
+    abrirPopup(
+        'Erro',
+        'Não foi possível salvar o produto.',
+        'erro'
     )
   }
 }
-
 const editarProduto = (produto) => {
 
   if(role.value !== 'ADMIN') {
@@ -247,11 +292,7 @@ const excluirProduto = async (id) => {
     )
 
   } catch (error) {
-
-    console.error('Erro completo:', error)
-    console.error('Status:', error.response?.status)
-    console.error('Resposta:', error.response?.data)
-
+    console.error('Erro ao excluir produto:', error)
     abrirPopup(
         'Erro',
         `Não foi possível excluir o produto. Status: ${error.response?.status}`,
@@ -325,12 +366,14 @@ onMounted(() => {
           v-model="loginForm.email"
           type="text"
           placeholder="Email"
+          autocomplete="off"
       />
 
       <input
           v-model="loginForm.senha"
           type="password"
           placeholder="Senha"
+          autocomplete="new-password"
       />
 
       <button @click="login">
@@ -408,12 +451,29 @@ onMounted(() => {
       step="0.01"
       placeholder="Preço"
     />
+    <div class="campo-form">
+      <label>
+        Categoria
+      </label>
 
-    <input
-      v-model="form.categoria"
-      type="text"
-      placeholder="Categoria"
-    />
+      <select v-model="form.categoria">
+        <option disabled value="">
+          Selecione uma categoria
+        </option>
+
+        <option value="Bebidas">
+          Bebidas
+        </option>
+
+        <option value="Porções">
+          Porções
+        </option>
+
+        <option value="Lanches">
+          Lanches
+        </option>
+      </select>
+    </div>
 
     <label class="checkbox">
 
@@ -467,7 +527,7 @@ onMounted(() => {
 
       <p>
         <strong>Preço:</strong>
-        R$ {{ produto.preco }}
+        R$ {{ Number(produto.preco).toFixed(2).replace('.', ',') }}
       </p>
 
       <p>
@@ -842,5 +902,41 @@ button {
   background: #1f1f1f;
   color: white;
   width: 100%;
+}
+.formulario input[type="text"],
+.formulario input[type="number"],
+.formulario select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+.campo-form {
+  margin-bottom: 12px;
+}
+
+.campo-form label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #333;
+}
+
+.campo-form select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: white;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.campo-form select:focus {
+  outline: none;
+  border-color: #8b0000;
+  box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.15);
 }
 </style>
