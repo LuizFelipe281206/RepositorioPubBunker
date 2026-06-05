@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import logo from './assets/logo.png'
 
 const API_URL = 'http://localhost:8080/produtos'
 const AUTH_URL = 'http://localhost:8080/auth/login'
@@ -281,54 +282,69 @@ onMounted(() => {
 
   <div class="container">
 
-```
-<div
-  v-if="!usuarioLogado"
-  class="login-box"
->
+    <div
+        v-if="!usuarioLogado"
+        class="login-box"
+    >
 
-  <h1>Login</h1>
+      <img
+          :src="logo"
+          alt="PubBunker"
+          class="logo-login"
+      />
 
-  <input
-    v-model="loginForm.email"
-    type="text"
-    placeholder="Email"
-  />
+      <h1>PubBunker</h1>
 
-  <input
-    v-model="loginForm.senha"
-    type="password"
-    placeholder="Senha"
-  />
+      <input
+          v-model="loginForm.email"
+          type="text"
+          placeholder="Email"
+      />
 
-  <button @click="login">
-    Entrar
-  </button>
+      <input
+          v-model="loginForm.senha"
+          type="password"
+          placeholder="Senha"
+      />
 
-</div>
+      <button @click="login">
+        Entrar
+      </button>
+
+    </div>
 
 <div v-else>
 
   <div class="topo">
 
-    <div>
+    <div class="logo-area">
 
-      <h1>PubBunker</h1>
+      <img
+          :src="logo"
+          alt="PubBunker"
+          class="logo"
+      >
 
-      <p>
-        Bem-vindo,
-        <strong>
-          {{ nomeUsuario }}
-        </strong>
+      <div>
 
-        ({{ role }})
-      </p>
+        <h1>PubBunker</h1>
+
+        <p>
+          Bem-vindo,
+          <strong>
+            {{ nomeUsuario }}
+          </strong>
+
+          ({{ role }})
+        </p>
+
+      </div>
 
     </div>
 
     <button
-      class="btn-logout"
-      @click="logout"
+        class="btn-logout"
+        @click="logout"
     >
       Logout
     </button>
@@ -514,7 +530,6 @@ onMounted(() => {
   </div>
 
 </div>
-```
 
   </div>
 
@@ -528,7 +543,7 @@ onMounted(() => {
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f4f4f4;
+  background:#ececec;
 }
 
 .container {
@@ -538,30 +553,70 @@ body {
 }
 
 .login-box {
-  max-width: 400px;
-  margin: 80px auto;
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  max-width: 420px;
+  margin: 90px auto;
+  background: #1f1f1f;
+  color: white;
+  padding: 32px;
+  border-radius: 18px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.18);
+  text-align: center;
+}
+
+.login-box h1 {
+  margin-top: 4px;
+  margin-bottom: 24px;
+  font-size: 32px;
 }
 
 .login-box input {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  padding: 12px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  font-size: 15px;
 }
 
-.topo {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.login-box input:focus {
+  outline: none;
+  border-color: #8b0000;
+  box-shadow: 0 0 0 2px rgba(139,0,0,.25);
 }
 
-.btn-logout {
-  background: #444;
+.login-box button {
+  width: 100%;
+  margin-top: 8px;
+  background: #8b0000;
+  color: white;
+  padding: 12px;
+}
+
+.login-box input::placeholder {
+  color: #888;
+}
+
+.login-box button:hover {
+  background: #9f0000;
+  transform: translateY(-2px);
+}
+
+.topo{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  background:#1f1f1f;
+  color:white;
+
+  padding:20px;
+  border-radius:14px;
+
+  margin-bottom:24px;
+}
+
+.btn-logout{
+  background:#8b0000;
   color: white;
 }
 
@@ -616,11 +671,19 @@ button {
   gap: 16px;
 }
 
-.card {
-  background: white;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+.card{
+  background:white;
+  padding:18px;
+  border-radius:14px;
+
+  box-shadow:
+      0 4px 12px rgba(0,0,0,.08);
+
+  transition:.2s;
+}
+
+.card:hover{
+  transform:translateY(-4px);
 }
 
 .card h2 {
@@ -633,32 +696,34 @@ button {
   margin-top: 12px;
 }
 
-.btn-editar {
-  background: #f0ad4e;
-  color: white;
+.btn-editar{
+  background:#f28c28;
+  color:white;
 }
 
-.btn-excluir {
-  background: #d9534f;
-  color: white;
+.btn-excluir{
+  background:#8b0000;
+  color:white;
 }
 
-.btn-pedido {
-  background: #5cb85c;
-  color: white;
+.btn-pedido{
+  background:#5f6f1f;
+  color:white;
 }
 
-.carrinho {
-  margin-top: 24px;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
+.carrinho{
+  margin-top:24px;
+  background:white;
+  padding:20px;
+  border-radius:12px;
+
+  box-shadow:
+      0 4px 12px rgba(0,0,0,.08);
 }
 
-.btn-finalizar {
-  margin-top: 12px;
-  background: #0275d8;
-  color: white;
+.btn-finalizar{
+  background:#5f6f1f;
+  color:white;
 }
 
 .item-carrinho {
@@ -677,5 +742,24 @@ button {
   margin-left: 10px;
   background: #777;
   color: white;
+}
+
+.logo-area{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+.logo{
+  width:80px;
+  height:80px;
+  object-fit:contain;
+}
+
+.logo-login {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  margin-bottom: 12px;
 }
 </style>
