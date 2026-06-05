@@ -29,6 +29,26 @@ const form = ref({
   ativo: true
 })
 
+const popup = ref({
+  mostrar: false,
+  titulo: '',
+  mensagem: '',
+  tipo: 'sucesso'
+})
+
+const abrirPopup = (titulo, mensagem, tipo = 'sucesso') => {
+  popup.value = {
+    mostrar: true,
+    titulo,
+    mensagem,
+    tipo
+  }
+}
+
+const fecharPopup = () => {
+  popup.value.mostrar = false
+}
+
 const adicionarAoPedido = (produto) => {
 
   carrinho.value.push(produto)
@@ -84,12 +104,10 @@ const login = async () => {
     nomeUsuario.value = response.data.nome
     usuarioLogado.value = true
 
-    alert('Login realizado com sucesso!')
-
+    abrirPopup('Sucesso', 'Login realizado com sucesso!')
   } catch (error) {
 
-    alert('Email ou senha inválidos')
-  }
+    abrirPopup('Erro', 'Email ou senha inválidos', 'erro')  }
 }
 
 const logout = () => {
@@ -209,27 +227,35 @@ const editarProduto = (produto) => {
 const excluirProduto = async (id) => {
 
   if(role.value !== 'ADMIN') {
-
-    alert(
-      'Apenas administradores podem excluir produtos'
+    abrirPopup(
+        'Acesso negado',
+        'Apenas administradores podem excluir produtos.',
+        'erro'
     )
-
     return
   }
 
   try {
-
-    await axios.delete(
-      `${API_URL}/${id}`
-    )
+    await axios.delete(`${API_URL}/${id}`)
 
     await carregarProdutos()
 
+    abrirPopup(
+        'Produto excluído',
+        'O produto foi removido com sucesso.',
+        'sucesso'
+    )
+
   } catch (error) {
 
-    console.error(
-      'Erro ao excluir produto:',
-      error
+    console.error('Erro completo:', error)
+    console.error('Status:', error.response?.status)
+    console.error('Resposta:', error.response?.data)
+
+    abrirPopup(
+        'Erro',
+        `Não foi possível excluir o produto. Status: ${error.response?.status}`,
+        'erro'
     )
   }
 }
@@ -465,9 +491,9 @@ onMounted(() => {
         </button>
 
         <button
-          v-if="role === 'ADMIN'"
-          class="btn-excluir"
-          @click="excluirProduto(produto.id)"
+            v-if="role === 'ADMIN'"
+            class="btn-excluir"
+            @click="excluirProduto(produto.id)"
         >
           Excluir
         </button>
@@ -531,6 +557,23 @@ onMounted(() => {
 
 </div>
 
+  </div>
+  <div
+      v-if="popup.mostrar"
+      class="popup-fundo"
+  >
+    <div
+        class="popup"
+        :class="popup.tipo"
+    >
+      <h2>{{ popup.titulo }}</h2>
+
+      <p>{{ popup.mensagem }}</p>
+
+      <button @click="fecharPopup">
+        OK
+      </button>
+    </div>
   </div>
 
 </template>
@@ -761,5 +804,43 @@ button {
   height: 140px;
   object-fit: contain;
   margin-bottom: 12px;
+}
+
+.popup-fundo {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.popup {
+  width: 360px;
+  background: white;
+  padding: 28px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+}
+
+.popup h2 {
+  margin-top: 0;
+}
+
+.popup.sucesso {
+  border-top: 6px solid #5f6f1f;
+}
+
+.popup.erro {
+  border-top: 6px solid #8b0000;
+}
+
+.popup button {
+  margin-top: 16px;
+  background: #1f1f1f;
+  color: white;
+  width: 100%;
 }
 </style>
