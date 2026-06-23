@@ -70,10 +70,19 @@ const carregarProdutos = async () => {
 
     const response = await axios.get(API_URL)
 
-    produtos.value = response.data.filter(
-        produto => produto.ativo === true
-    )
+    if(role.value === 'ADMIN') {
+
+      produtos.value = response.data
+
+    } else {
+
+      produtos.value = response.data.filter(
+          produto => produto.ativo === true
+      )
+    }
+
   } catch (error) {
+
     console.error('Erro ao carregar produtos:', error)
   }
 }
@@ -103,6 +112,8 @@ const login = async () => {
     role.value = response.data.role
     nomeUsuario.value = response.data.nome
     usuarioLogado.value = true
+
+    await carregarProdutos()
 
     abrirPopup('Sucesso', 'Login realizado com sucesso!')
   } catch (error) {
