@@ -72,11 +72,6 @@ public class PedidoController {
     public void deletarPedido(
             @PathVariable Long id
     ) {
-        Pedido pedido =
-                pedidoRepository.findById(id)
-                        .orElseThrow();
-
-        pedido.setDeletedAt(LocalDateTime.now());
-        pedidoRepository.save(pedido);
+        pedidoRepository.deleteById(id);
     }
 }

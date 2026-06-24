@@ -5,9 +5,11 @@ import logo from './assets/logo.png'
 
 const API_URL = 'http://localhost:8080/produtos'
 const AUTH_URL = 'http://localhost:8080/auth/login'
+const PEDIDOS_URL = 'http://localhost:8080/pedidos'
 
 const produtos = ref([])
 const carrinho = ref([])
+const pedidos = ref([])
 
 const editando = ref(false)
 const idEditando = ref(null)
@@ -86,7 +88,73 @@ const carregarProdutos = async () => {
     console.error('Erro ao carregar produtos:', error)
   }
 }
+const carregarPedidos = async () => {
+  try {
+    const response = await axios.get(PEDIDOS_URL)
+    pedidos.value = response.data
+  } catch (error) {
+    console.error('Erro ao carregar pedidos:', error)
+  }
+}
 
+const atualizarStatusPedido = async (id, status) => {
+  try {
+    await axios.patch(
+        `${PEDIDOS_URL}/status/${id}`,
+        { status }
+    )
+
+    abrirPopup(
+        'Status atualizado',
+        'O status do pedido foi atualizado com sucesso.',
+        'sucesso'
+    )
+
+    await carregarPedidos()
+
+  } catch (error) {
+    console.error('Erro ao atualizar status:', error)
+
+    abrirPopup(
+        'Erro',
+        'Não foi possível atualizar o status do pedido.',
+        'erro'
+    )
+  }
+}
+
+const fecharPedido = async (pedido) => {
+  if(pedido.status !== 'CONCLUIDO') {
+    abrirPopup(
+        'Ação não permitida',
+        'O pedido só pode ser fechado quando estiver concluído.',
+        'erro'
+    )
+
+    return
+  }
+
+  try {
+    await axios.delete(`${PEDIDOS_URL}/${pedido.id}`)
+
+    abrirPopup(
+        'Pedido fechado',
+        'O pedido foi removido da tela administrativa.',
+        'sucesso'
+    )
+
+    await carregarPedidos()
+
+  } catch (error) {
+    console.error('Erro ao fechar pedido:', error)
+
+    abrirPopup(
+        'Erro',
+        'Não foi possível fechar o pedido.',
+        'erro'
+    )
+  }
+}
 const login = async () => {
 
   try {
@@ -114,6 +182,10 @@ const login = async () => {
     usuarioLogado.value = true
 
     await carregarProdutos()
+    if(role.value === 'ADMIN') {
+
+      await carregarPedidos()
+    }
 
     abrirPopup('Sucesso', 'Login realizado com sucesso!')
   } catch (error) {
@@ -129,6 +201,7 @@ const logout = () => {
   usuarioLogado.value = false
   role.value = ''
   nomeUsuario.value = ''
+  pedidos.value = []
 
   loginForm.value = {
     email: '',
@@ -359,11 +432,16 @@ const finalizarPedido = async () => {
     )  }
 }
 
-onMounted(() => {
+onMounted(async () => {
 
   verificarLogin()
 
-  carregarProdutos()
+  await carregarProdutos()
+
+  if(role.value === 'ADMIN') {
+
+    await carregarPedidos()
+  }
 })
 </script>
 
@@ -446,7 +524,77 @@ onMounted(() => {
     v-if="role === 'ADMIN'"
     class="formulario"
   >
+    <div
+        v-if="role === 'ADMIN'"
+        class="pedidos-admin"
+    >
+      <h2>Pedidos Recebidos</h2>
 
+      <p
+          v-if="pedidos.length === 0"
+          class="sem-pedidos"
+      >
+        Nenhum pedido recebido.
+      </p>
+
+      <div
+          v-for="pedido in pedidos"
+          :key="pedido.id"
+          class="card-pedido"
+      >
+        <h3>Pedido #{{ pedido.id }}</h3>
+
+        <p>
+          <strong>Status:</strong>
+          {{ pedido.status }}
+        </p>
+
+        <p>
+          <strong>Total:</strong>
+          R$ {{ Number(pedido.valorTotal).toFixed(2).replace('.', ',') }}
+        </p>
+
+        <div
+            v-if="pedido.produtos && pedido.produtos.length > 0"
+            class="produtos-pedido"
+        >
+          <strong>Produtos:</strong>
+
+          <ul>
+            <li
+                v-for="produto in pedido.produtos"
+                :key="produto.id"
+            >
+              {{ produto.nome }}
+            </li>
+          </ul>
+        </div>
+
+        <div class="acoes-pedido">
+          <button
+              class="btn-preparo"
+              @click="atualizarStatusPedido(pedido.id, 'EM_PREPARO')"
+          >
+            Em preparo
+          </button>
+
+          <button
+              class="btn-concluir"
+              @click="atualizarStatusPedido(pedido.id, 'CONCLUIDO')"
+          >
+            Concluir
+          </button>
+
+          <button
+              class="btn-fechar-pedido"
+              :disabled="pedido.status !== 'CONCLUIDO'"
+              @click="fecharPedido(pedido)"
+          >
+            Fechar Pedido
+          </button>
+        </div>
+      </div>
+    </div>
     <h2>
       {{
         editando
@@ -960,5 +1108,67 @@ button {
   outline: none;
   border-color: #8b0000;
   box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.15);
+}
+.pedidos-admin {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+
+.pedidos-admin h2 {
+  margin-top: 0;
+  border-left: 5px solid #8b0000;
+  padding-left: 12px;
+}
+
+.sem-pedidos {
+  color: #666;
+}
+
+.card-pedido {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: #fafafa;
+}
+
+.card-pedido h3 {
+  margin-top: 0;
+}
+
+.produtos-pedido ul {
+  margin-top: 8px;
+  padding-left: 20px;
+}
+
+.acoes-pedido {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.btn-preparo {
+  background: #f28c28;
+  color: white;
+}
+
+.btn-concluir {
+  background: #5f6f1f;
+  color: white;
+}
+
+.btn-fechar-pedido {
+  background: #1f1f1f;
+  color: white;
+}
+
+.btn-fechar-pedido:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 </style>
