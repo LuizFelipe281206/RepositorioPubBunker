@@ -74,7 +74,9 @@ const carregarProdutos = async () => {
 
     if(role.value === 'ADMIN') {
 
-      produtos.value = response.data
+      produtos.value = response.data.filter(
+          produto => produto.ativo === true
+      )
 
     } else {
 
@@ -83,9 +85,9 @@ const carregarProdutos = async () => {
       )
     }
 
-  } catch (error) {
+  } catch(error) {
 
-    console.error('Erro ao carregar produtos:', error)
+    console.error(error)
   }
 }
 const carregarPedidos = async () => {
