@@ -1,5 +1,6 @@
 package com.pubbunker.service;
-
+import com.pubbunker.exception.RecursoNaoEncontradoException;
+import com.pubbunker.exception.RegraNegocioException;
 import com.pubbunker.dto.AtualizarStatusDTO;
 import com.pubbunker.dto.CriarPedidoDTO;
 import com.pubbunker.enums.StatusPedido;
@@ -38,7 +39,7 @@ public class PedidoService {
     public Pedido buscarPorId(Long id) {
         return pedidoRepository.findById(id)
                 .orElseThrow(
-                        () -> new RuntimeException(
+                        () -> new RecursoNaoEncontradoException(
                                 "Pedido não encontrado com id: " + id
                         )
                 );
@@ -47,8 +48,8 @@ public class PedidoService {
     public Pedido criar(CriarPedidoDTO dto) {
 
         if (dto.getClienteId() == null) {
-            throw new RuntimeException(
-                    "O cliente do pedido deve ser informado."
+            throw new RegraNegocioException(
+                    "O cliente deve ser informado."
             );
         }
 
@@ -56,7 +57,7 @@ public class PedidoService {
                 dto.getProdutosIds() == null ||
                         dto.getProdutosIds().isEmpty()
         ) {
-            throw new RuntimeException(
+            throw new RegraNegocioException(
                     "O pedido deve possuir pelo menos um produto."
             );
         }
@@ -64,7 +65,7 @@ public class PedidoService {
         Usuario cliente = usuarioRepository
                 .findById(dto.getClienteId())
                 .orElseThrow(
-                        () -> new RuntimeException(
+                        () -> new RecursoNaoEncontradoException(
                                 "Usuário não encontrado com id: "
                                         + dto.getClienteId()
                         )
@@ -74,7 +75,7 @@ public class PedidoService {
                 .findAllById(dto.getProdutosIds());
 
         if (produtos.size() != dto.getProdutosIds().size()) {
-            throw new RuntimeException(
+            throw new RecursoNaoEncontradoException(
                     "Um ou mais produtos não foram encontrados."
             );
         }
@@ -101,7 +102,7 @@ public class PedidoService {
         Pedido pedido = buscarPorId(id);
 
         if (dto.getStatus() == null) {
-            throw new RuntimeException(
+            throw new RegraNegocioException(
                     "O novo status deve ser informado."
             );
         }

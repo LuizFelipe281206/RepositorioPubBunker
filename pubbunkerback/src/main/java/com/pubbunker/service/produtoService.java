@@ -1,9 +1,8 @@
 package com.pubbunker.service;
-
 import com.pubbunker.model.produto;
 import com.pubbunker.repository.produtoRepository;
 import org.springframework.stereotype.Service;
-
+import com.pubbunker.exception.RecursoNaoEncontradoException;
 import java.util.List;
 
 @Service
@@ -21,7 +20,11 @@ public class produtoService {
 
     public produto buscarPorId(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado com id: " + id));
+                .orElseThrow(
+                        () -> new RecursoNaoEncontradoException(
+                                "Produto não encontrado com id: " + id
+                        )
+                );
     }
 
     public produto salvar(produto produto) {
