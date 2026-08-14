@@ -6,10 +6,10 @@ import com.pubbunker.dto.CriarPedidoDTO;
 import com.pubbunker.enums.StatusPedido;
 import com.pubbunker.model.Pedido;
 import com.pubbunker.model.Usuario;
-import com.pubbunker.model.produto;
-import com.pubbunker.repository.pedidoRepository;
-import com.pubbunker.repository.produtoRepository;
-import com.pubbunker.repository.usuarioRepository;
+import com.pubbunker.model.Produto;
+import com.pubbunker.repository.PedidoRepository;
+import com.pubbunker.repository.ProdutoRepository;
+import com.pubbunker.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -18,14 +18,14 @@ import java.util.List;
 @Service
 public class PedidoService {
 
-    private final pedidoRepository pedidoRepository;
-    private final produtoRepository produtoRepository;
-    private final usuarioRepository usuarioRepository;
+    private final PedidoRepository pedidoRepository;
+    private final ProdutoRepository produtoRepository;
+    private final UsuarioRepository usuarioRepository;
 
     public PedidoService(
-            pedidoRepository pedidoRepository,
-            produtoRepository produtoRepository,
-            usuarioRepository usuarioRepository
+            PedidoRepository pedidoRepository,
+            ProdutoRepository produtoRepository,
+            UsuarioRepository usuarioRepository
     ) {
         this.pedidoRepository = pedidoRepository;
         this.produtoRepository = produtoRepository;
@@ -71,7 +71,7 @@ public class PedidoService {
                         )
                 );
 
-        List<produto> produtos = produtoRepository
+        List<Produto> produtos = produtoRepository
                 .findAllById(dto.getProdutosIds());
 
         if (produtos.size() != dto.getProdutosIds().size()) {
@@ -81,7 +81,7 @@ public class PedidoService {
         }
 
         double total = produtos.stream()
-                .mapToDouble(produto::getPreco)
+                .mapToDouble(Produto::getPreco)
                 .sum();
 
         Pedido pedido = new Pedido();

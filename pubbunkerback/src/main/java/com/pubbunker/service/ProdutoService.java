@@ -1,24 +1,24 @@
 package com.pubbunker.service;
-import com.pubbunker.model.produto;
-import com.pubbunker.repository.produtoRepository;
+import com.pubbunker.model.Produto;
+import com.pubbunker.repository.ProdutoRepository;
 import org.springframework.stereotype.Service;
 import com.pubbunker.exception.RecursoNaoEncontradoException;
 import java.util.List;
 
 @Service
-public class produtoService {
+public class ProdutoService {
 
-    private final produtoRepository repository;
+    private final ProdutoRepository repository;
 
-    public produtoService(produtoRepository repository) {
+    public ProdutoService(ProdutoRepository repository) {
         this.repository = repository;
     }
 
-    public List<produto> listarTodos() {
+    public List<Produto> listarTodos() {
         return repository.findAll();
     }
 
-    public produto buscarPorId(Long id) {
+    public Produto buscarPorId(Long id) {
         return repository.findById(id)
                 .orElseThrow(
                         () -> new RecursoNaoEncontradoException(
@@ -27,15 +27,15 @@ public class produtoService {
                 );
     }
 
-    public produto salvar(produto produto) {
+    public Produto salvar(Produto produto) {
         if (produto.getAtivo() == null) {
             produto.setAtivo(true);
         }
         return repository.save(produto);
     }
 
-    public produto atualizar(Long id, produto produtoAtualizado) {
-        produto produtoExistente = buscarPorId(id);
+    public Produto atualizar(Long id, Produto produtoAtualizado) {
+        Produto produtoExistente = buscarPorId(id);
 
         produtoExistente.setNome(produtoAtualizado.getNome());
         produtoExistente.setDescricao(produtoAtualizado.getDescricao());
@@ -47,7 +47,7 @@ public class produtoService {
     }
 
     public void deletar(Long id) {
-        produto produto = buscarPorId(id);
+        Produto produto = buscarPorId(id);
         produto.setAtivo(false);
         repository.save(produto);
     }

@@ -2,16 +2,16 @@ package com.pubbunker.service;
 
 import com.pubbunker.exception.RecursoNaoEncontradoException;
 import com.pubbunker.model.Usuario;
-import com.pubbunker.repository.usuarioRepository;
+import com.pubbunker.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 @Service
 public class UsuarioService {
 
-    private final usuarioRepository repository;
+    private final UsuarioRepository repository;
 
-    public UsuarioService(usuarioRepository repository) {
+    public UsuarioService(UsuarioRepository repository) {
         this.repository = repository;
     }
 

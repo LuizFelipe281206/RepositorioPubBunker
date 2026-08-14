@@ -24,7 +24,7 @@ public class Pedido {
             joinColumns = @JoinColumn(name = "pedido_id"),
             inverseJoinColumns = @JoinColumn(name = "produto_id")
     )
-    private List<produto> produtos;
+    private List<Produto> produtos;
 
     @Enumerated(EnumType.STRING)
     private StatusPedido status;
@@ -40,7 +40,7 @@ public class Pedido {
     public Usuario getCliente() {
         return cliente;
     }
-    public List<produto> getProdutos() {
+    public List<Produto> getProdutos() {
         return produtos;
     }
     public StatusPedido getStatus() {
@@ -61,7 +61,7 @@ public class Pedido {
     public void setCliente(Usuario cliente) {
         this.cliente = cliente;
     }
-    public void setProdutos(List<produto> produtos) {
+    public void setProdutos(List<Produto> produtos) {
         this.produtos = produtos;
     }
     public void setStatus(StatusPedido status) {

@@ -1,7 +1,7 @@
 package com.pubbunker.controller;
 
-import com.pubbunker.model.produto;
-import com.pubbunker.service.produtoService;
+import com.pubbunker.model.Produto;
+import com.pubbunker.service.ProdutoService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -9,31 +9,31 @@ import java.util.List;
 @RestController
 @RequestMapping("/produtos")
 @CrossOrigin(origins = "*")
-public class produtoController {
+public class ProdutoController {
 
-    private final produtoService service;
+    private final ProdutoService service;
 
-    public produtoController(produtoService service) {
+    public ProdutoController(ProdutoService service) {
         this.service = service;
     }
 
     @GetMapping
-    public List<produto> listarTodos() {
+    public List<Produto> listarTodos() {
         return service.listarTodos();
     }
 
     @GetMapping("/{id}")
-    public produto buscarPorId(@PathVariable Long id) {
+    public Produto buscarPorId(@PathVariable Long id) {
         return service.buscarPorId(id);
     }
 
     @PostMapping
-    public produto criar(@RequestBody produto produto) {
+    public Produto criar(@RequestBody Produto produto) {
         return service.salvar(produto);
     }
 
     @PutMapping("/{id}")
-    public produto atualizar(@PathVariable Long id, @RequestBody produto produto) {
+    public Produto atualizar(@PathVariable Long id, @RequestBody Produto produto) {
         return service.atualizar(id, produto);
     }
     @DeleteMapping("/{id}")
