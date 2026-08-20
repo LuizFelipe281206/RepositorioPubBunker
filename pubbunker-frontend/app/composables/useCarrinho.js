@@ -6,6 +6,7 @@ export const useCarrinho = () => {
 
     const { $api } = useNuxtApp()
     const { abrirPopup } = usePopup()
+    const { usuarioId } = useAuth()
 
     const adicionar = (produto) => {
         carrinho.value.push(produto)
@@ -35,12 +36,24 @@ export const useCarrinho = () => {
             return
         }
 
+        if (!usuarioId.value) {
+            abrirPopup(
+                'Sessão inválida',
+                'Entre novamente antes de finalizar o pedido.',
+                'erro'
+            )
+
+            return
+        }
+
         try {
             await $api.post('/pedidos', {
-                clienteId: 3,
-                produtosIds: carrinho.value.map(
-                    produto => produto.id
-                )
+                clienteId: usuarioId.value,
+
+                produtosIds:
+                    carrinho.value.map(
+                        produto => produto.id
+                    )
             })
 
             carrinho.value = []

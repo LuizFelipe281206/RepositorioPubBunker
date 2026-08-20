@@ -42,3 +42,5 @@ __screenshots__/
 .nuxt
 .output
 .data
+
+node_modules/

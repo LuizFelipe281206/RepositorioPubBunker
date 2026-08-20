@@ -4,6 +4,11 @@ export const useAuth = () => {
         () => false
     )
 
+    const usuarioId = useState(
+        'usuario-id',
+        () => null
+    )
+
     const role = useState(
         'usuario-role',
         () => ''
@@ -20,13 +25,22 @@ export const useAuth = () => {
     const restaurarSessao = () => {
         if (import.meta.server) return
 
+        const idSalvo =
+            localStorage.getItem('usuarioId')
+
+        usuarioId.value =
+            idSalvo ? Number(idSalvo) : null
+
         role.value =
             localStorage.getItem('role') || ''
 
         nomeUsuario.value =
             localStorage.getItem('nome') || ''
 
-        usuarioLogado.value = Boolean(role.value)
+        usuarioLogado.value = Boolean(
+            usuarioId.value &&
+            role.value
+        )
     }
 
     const login = async (credenciais) => {
@@ -36,9 +50,22 @@ export const useAuth = () => {
                 credenciais
             )
 
-            localStorage.setItem('role', data.role)
-            localStorage.setItem('nome', data.nome)
+            localStorage.setItem(
+                'usuarioId',
+                String(data.id)
+            )
 
+            localStorage.setItem(
+                'role',
+                data.role
+            )
+
+            localStorage.setItem(
+                'nome',
+                data.nome
+            )
+
+            usuarioId.value = data.id
             role.value = data.role
             nomeUsuario.value = data.nome
             usuarioLogado.value = true
@@ -63,9 +90,11 @@ export const useAuth = () => {
     }
 
     const logout = async () => {
+        localStorage.removeItem('usuarioId')
         localStorage.removeItem('role')
         localStorage.removeItem('nome')
 
+        usuarioId.value = null
         usuarioLogado.value = false
         role.value = ''
         nomeUsuario.value = ''
@@ -75,6 +104,7 @@ export const useAuth = () => {
 
     return {
         usuarioLogado,
+        usuarioId,
         role,
         nomeUsuario,
         restaurarSessao,

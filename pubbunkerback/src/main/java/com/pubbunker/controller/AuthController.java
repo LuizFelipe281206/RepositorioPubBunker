@@ -36,6 +36,7 @@ public class AuthController {
 
             LoginResponseDTO response =
                     new LoginResponseDTO(
+                            usuario.getId(),
                             usuario.getNome(),
                             usuario.getEmail(),
                             usuario.getRole()
