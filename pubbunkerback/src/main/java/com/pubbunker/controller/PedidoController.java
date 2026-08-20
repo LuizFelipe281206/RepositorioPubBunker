@@ -2,7 +2,7 @@ package com.pubbunker.controller;
 
 import com.pubbunker.dto.AtualizarStatusDTO;
 import com.pubbunker.dto.CriarPedidoDTO;
-import com.pubbunker.model.Pedido;
+import com.pubbunker.dto.PedidoResponseDTO;
 import com.pubbunker.service.PedidoService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -21,30 +21,39 @@ public class PedidoController {
     }
 
     @GetMapping
-    public List<Pedido> listarPedidos() {
-        return service.listarTodos();
+    public List<PedidoResponseDTO> listarPedidos() {
+        return service.listarTodos()
+                .stream()
+                .map(PedidoResponseDTO::new)
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public Pedido buscarPorId(
+    public PedidoResponseDTO buscarPorId(
             @PathVariable Long id
     ) {
-        return service.buscarPorId(id);
+        return new PedidoResponseDTO(
+                service.buscarPorId(id)
+        );
     }
 
     @PostMapping
-    public Pedido criarPedido(
+    public PedidoResponseDTO criarPedido(
             @Valid @RequestBody CriarPedidoDTO dto
     ) {
-        return service.criar(dto);
+        return new PedidoResponseDTO(
+                service.criar(dto)
+        );
     }
 
     @PatchMapping("/status/{id}")
-    public Pedido atualizarStatus(
+    public PedidoResponseDTO atualizarStatus(
             @PathVariable Long id,
             @Valid @RequestBody AtualizarStatusDTO dto
     ) {
-        return service.atualizarStatus(id, dto);
+        return new PedidoResponseDTO(
+                service.atualizarStatus(id, dto)
+        );
     }
 
     @DeleteMapping("/{id}")
