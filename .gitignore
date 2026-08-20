@@ -4,3 +4,4 @@ pubbunker-frontend/dist/
 .vscode/
 .idea/
 *.log
+node_modules/
