@@ -4,15 +4,13 @@ import com.pubbunker.repository.ProdutoRepository;
 import org.springframework.stereotype.Service;
 import com.pubbunker.exception.RecursoNaoEncontradoException;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class ProdutoService {
 
     private final ProdutoRepository repository;
-
-    public ProdutoService(ProdutoRepository repository) {
-        this.repository = repository;
-    }
 
     public List<Produto> listarTodos() {
         return repository.findAll();

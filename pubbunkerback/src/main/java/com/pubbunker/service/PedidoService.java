@@ -14,23 +14,15 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class PedidoService {
 
     private final PedidoRepository pedidoRepository;
     private final ProdutoRepository produtoRepository;
     private final UsuarioRepository usuarioRepository;
-
-    public PedidoService(
-            PedidoRepository pedidoRepository,
-            ProdutoRepository produtoRepository,
-            UsuarioRepository usuarioRepository
-    ) {
-        this.pedidoRepository = pedidoRepository;
-        this.produtoRepository = produtoRepository;
-        this.usuarioRepository = usuarioRepository;
-    }
 
     public List<Pedido> listarTodos() {
         return pedidoRepository.findAll();

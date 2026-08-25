@@ -2,12 +2,18 @@ package com.pubbunker.model;
 
 import com.pubbunker.enums.StatusPedido;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "pedidos")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Pedido {
 
     @Id
@@ -28,52 +34,8 @@ public class Pedido {
 
     @Enumerated(EnumType.STRING)
     private StatusPedido status;
+
     private Double valorTotal;
     private LocalDateTime dataPedido;
     private LocalDateTime deletedAt;
-
-    public Pedido() {
-    }
-    public Long getId() {
-        return id;
-    }
-    public Usuario getCliente() {
-        return cliente;
-    }
-    public List<Produto> getProdutos() {
-        return produtos;
-    }
-    public StatusPedido getStatus() {
-        return status;
-    }
-    public Double getValorTotal() {
-        return valorTotal;
-    }
-    public LocalDateTime getDataPedido() {
-        return dataPedido;
-    }
-    public LocalDateTime getDeletedAt() {
-        return deletedAt;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public void setCliente(Usuario cliente) {
-        this.cliente = cliente;
-    }
-    public void setProdutos(List<Produto> produtos) {
-        this.produtos = produtos;
-    }
-    public void setStatus(StatusPedido status) {
-        this.status = status;
-    }
-    public void setValorTotal(Double valorTotal) {
-        this.valorTotal = valorTotal;
-    }
-    public void setDataPedido(LocalDateTime dataPedido) {
-        this.dataPedido = dataPedido;
-    }
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
 }

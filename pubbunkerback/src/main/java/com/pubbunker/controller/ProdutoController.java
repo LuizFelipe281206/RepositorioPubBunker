@@ -5,17 +5,15 @@ import com.pubbunker.service.ProdutoService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/produtos")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class ProdutoController {
 
     private final ProdutoService service;
-
-    public ProdutoController(ProdutoService service) {
-        this.service = service;
-    }
 
     @GetMapping
     public List<Produto> listarTodos() {

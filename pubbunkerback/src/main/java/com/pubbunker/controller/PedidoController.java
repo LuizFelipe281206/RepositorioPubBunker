@@ -8,17 +8,15 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/pedidos")
 @CrossOrigin("*")
+@RequiredArgsConstructor
 public class PedidoController {
 
     private final PedidoService service;
-
-    public PedidoController(PedidoService service) {
-        this.service = service;
-    }
 
     @GetMapping
     public List<PedidoResponseDTO> listarPedidos() {

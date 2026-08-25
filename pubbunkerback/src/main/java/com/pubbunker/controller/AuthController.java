@@ -8,17 +8,15 @@ import com.pubbunker.service.UsuarioService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin("*")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final UsuarioService usuarioService;
-
-    public AuthController(UsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
-    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(
