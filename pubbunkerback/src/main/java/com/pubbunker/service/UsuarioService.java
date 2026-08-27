@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -15,7 +16,7 @@ public class UsuarioService {
     private final UsuarioRepository repository;
 
     public Usuario buscarPorId(Long id) {
-        return repository.findById(id)
+        return repository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(
                         () -> new RecursoNaoEncontradoException(
                                 "Usuário não encontrado com id: " + id
@@ -24,7 +25,7 @@ public class UsuarioService {
     }
 
     public Usuario buscarPorEmail(String email) {
-        return repository.findByEmail(email)
+        return repository.findByEmailAndDeletedAtIsNull(email)
                 .orElseThrow(
                         () -> new RecursoNaoEncontradoException(
                                 "Usuário não encontrado."
@@ -33,10 +34,18 @@ public class UsuarioService {
     }
 
     public List<Usuario> listarTodos() {
-        return repository.findAll();
+        return repository.findByDeletedAtIsNull();
     }
 
     public Usuario salvar(Usuario usuario) {
         return repository.save(usuario);
+    }
+
+    public void deletar(Long id) {
+        Usuario usuario = buscarPorId(id);
+
+        usuario.setDeletedAt(LocalDateTime.now());
+
+        repository.save(usuario);
     }
 }

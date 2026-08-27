@@ -25,11 +25,11 @@ public class PedidoService {
     private final UsuarioRepository usuarioRepository;
 
     public List<Pedido> listarTodos() {
-        return pedidoRepository.findAll();
+        return pedidoRepository.findByDeletedAtIsNull();
     }
 
     public Pedido buscarPorId(Long id) {
-        return pedidoRepository.findById(id)
+        return pedidoRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(
                         () -> new RecursoNaoEncontradoException(
                                 "Pedido não encontrado com id: " + id
@@ -55,7 +55,7 @@ public class PedidoService {
         }
 
         Usuario cliente = usuarioRepository
-                .findById(dto.getClienteId())
+                .findByIdAndDeletedAtIsNull(dto.getClienteId())
                 .orElseThrow(
                         () -> new RecursoNaoEncontradoException(
                                 "Usuário não encontrado com id: "
@@ -64,7 +64,9 @@ public class PedidoService {
                 );
 
         List<Produto> produtos = produtoRepository
-                .findAllById(dto.getProdutosIds());
+                .findAllByIdInAndDeletedAtIsNullAndAtivoTrue(
+                        dto.getProdutosIds()
+                );
 
         if (produtos.size() != dto.getProdutosIds().size()) {
             throw new RecursoNaoEncontradoException(
@@ -106,6 +108,7 @@ public class PedidoService {
 
     public void deletar(Long id) {
         Pedido pedido = buscarPorId(id);
-        pedidoRepository.delete(pedido);
+        pedido.setDeletedAt(LocalDateTime.now());
+        pedidoRepository.save(pedido);
     }
 }

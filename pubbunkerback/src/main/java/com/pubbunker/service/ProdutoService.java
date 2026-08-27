@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.pubbunker.exception.RecursoNaoEncontradoException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -13,11 +14,11 @@ public class ProdutoService {
     private final ProdutoRepository repository;
 
     public List<Produto> listarTodos() {
-        return repository.findAll();
+        return repository.findByDeletedAtIsNull();
     }
 
     public Produto buscarPorId(Long id) {
-        return repository.findById(id)
+        return repository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(
                         () -> new RecursoNaoEncontradoException(
                                 "Produto não encontrado com id: " + id
@@ -47,6 +48,7 @@ public class ProdutoService {
     public void deletar(Long id) {
         Produto produto = buscarPorId(id);
         produto.setAtivo(false);
+        produto.setDeletedAt(LocalDateTime.now());
         repository.save(produto);
     }
 }
