@@ -7,3 +7,33 @@ Content-Type: application/json
   "preco": 10.0,
   "categoria": "bebida"
 }
+### Criar avaliação
+POST http://localhost:8080/avaliacoes
+Content-Type: application/json
+
+{
+  "usuarioId": 4,
+  "nota": 5,
+  "comentario": "Atendimento excelente e pedido muito bom."
+}
+
+### Listar todas
+GET http://localhost:8080/avaliacoes
+
+### Listar avaliações do usuário
+GET http://localhost:8080/avaliacoes/usuario/4
+
+### Buscar avaliação por ID
+GET http://localhost:8080/avaliacoes/1
+
+### Atualizar avaliação
+PUT http://localhost:8080/avaliacoes/1
+Content-Type: application/json
+
+{
+  "nota": 4,
+  "comentario": "Muito bom, mas poderia ser mais rápido."
+}
+
+### Excluir avaliação
+DELETE http://localhost:8080/avaliacoes/1
