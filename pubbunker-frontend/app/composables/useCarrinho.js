@@ -9,7 +9,20 @@ export const useCarrinho = () => {
     const { usuarioId } = useAuth()
 
     const adicionar = (produto) => {
-        carrinho.value.push(produto)
+        const produtoExistente =
+            carrinho.value.find(
+                item => item.id === produto.id
+            )
+
+        if (produtoExistente) {
+            produtoExistente.quantidade =
+                (produtoExistente.quantidade || 1) + 1
+        } else {
+            carrinho.value.push({
+                ...produto,
+                quantidade: 1
+            })
+        }
 
         abrirPopup(
             'Produto adicionado',
@@ -18,7 +31,15 @@ export const useCarrinho = () => {
     }
 
     const remover = (index) => {
-        carrinho.value.splice(index, 1)
+        const item = carrinho.value[index]
+
+        if (!item) return
+
+        if (item.quantidade > 1) {
+            item.quantidade--
+        } else {
+            carrinho.value.splice(index, 1)
+        }
     }
 
     const cancelar = () => {
@@ -50,10 +71,12 @@ export const useCarrinho = () => {
             await $api.post('/pedidos', {
                 clienteId: usuarioId.value,
 
-                produtosIds:
-                    carrinho.value.map(
-                        produto => produto.id
-                    )
+                itens: carrinho.value.map(
+                    item => ({
+                        produtoId: item.id,
+                        quantidade: item.quantidade
+                    })
+                )
             })
 
             carrinho.value = []

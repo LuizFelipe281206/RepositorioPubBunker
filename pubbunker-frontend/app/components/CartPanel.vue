@@ -8,8 +8,10 @@ const {
 
 const total = computed(() =>
     carrinho.value.reduce(
-        (soma, produto) =>
-            soma + Number(produto.preco),
+        (soma, item) =>
+            soma +
+            Number(item.preco) *
+            Number(item.quantidade || 1),
         0
     )
 )
@@ -36,21 +38,27 @@ const formatarPreco = valor =>
       </p>
 
       <div
-          v-for="(produto, index) in carrinho"
-          :key="`${produto.id}-${index}`"
+          v-for="(item, index) in carrinho"
+          :key="item.id"
           class="item-carrinho"
       >
         <span>
-          {{ produto.nome }} —
-          {{ formatarPreco(produto.preco) }}
+          {{ item.quantidade }}x
+          {{ item.nome }} —
+          {{
+            formatarPreco(
+                Number(item.preco) *
+                Number(item.quantidade)
+            )
+          }}
         </span>
 
         <Button
-            icon="pi pi-trash"
+            icon="pi pi-minus"
             severity="danger"
             text
             rounded
-            aria-label="Remover produto"
+            aria-label="Remover uma unidade"
             @click="remover(index)"
         />
       </div>

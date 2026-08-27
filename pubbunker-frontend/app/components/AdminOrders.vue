@@ -36,23 +36,31 @@ const formatarPreco = valor =>
         </template>
 
         <template #subtitle>
+          Cliente: {{ pedido.clienteNome }} —
           Status: {{ pedido.status }}
         </template>
 
         <template #content>
+          <ul v-if="pedido.itens?.length">
+            <li
+                v-for="item in pedido.itens"
+                :key="item.id"
+            >
+              {{ item.quantidade }}x
+              {{ item.produtoNome }}
+
+              — {{ formatarPreco(item.precoUnitario) }}
+              cada
+
+              — Subtotal:
+              {{ formatarPreco(item.subtotal) }}
+            </li>
+          </ul>
+
           <p>
             <strong>Total:</strong>
             {{ formatarPreco(pedido.valorTotal) }}
           </p>
-
-          <ul v-if="pedido.produtos?.length">
-            <li
-                v-for="produto in pedido.produtos"
-                :key="produto.id"
-            >
-              {{ produto.nome }}
-            </li>
-          </ul>
         </template>
 
         <template #footer>
@@ -60,31 +68,39 @@ const formatarPreco = valor =>
             <Button
                 label="Em preparo"
                 severity="warn"
+                :disabled="
+                  pedido.status === 'CONCLUIDO' ||
+                  pedido.status === 'CANCELADO'
+                "
                 @click="
-                atualizarStatus(
-                  pedido.id,
-                  'EM_PREPARO'
-                )
-              "
+                  atualizarStatus(
+                    pedido.id,
+                    'EM_PREPARO'
+                  )
+                "
             />
 
             <Button
                 label="Concluir"
                 severity="success"
+                :disabled="
+                  pedido.status === 'CONCLUIDO' ||
+                  pedido.status === 'CANCELADO'
+                "
                 @click="
-                atualizarStatus(
-                  pedido.id,
-                  'CONCLUIDO'
-                )
-              "
+                  atualizarStatus(
+                    pedido.id,
+                    'CONCLUIDO'
+                  )
+                "
             />
 
             <Button
                 label="Fechar"
                 severity="secondary"
                 :disabled="
-                pedido.status !== 'CONCLUIDO'
-              "
+                  pedido.status !== 'CONCLUIDO'
+                "
                 @click="fecharPedido(pedido)"
             />
           </div>
