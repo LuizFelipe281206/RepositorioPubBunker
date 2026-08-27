@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,7 +23,14 @@ public class Produto {
 
     private String nome;
     private String descricao;
-    private Double preco;
+
+    @Column(
+            nullable = false,
+            precision = 10,
+            scale = 2
+    )
+    private BigDecimal preco;
+
     private String categoria;
     private Boolean ativo;
 

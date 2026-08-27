@@ -6,7 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -20,23 +22,37 @@ public class Pedido {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "cliente_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "cliente_id", nullable = false)
     private Usuario cliente;
 
-    @ManyToMany
-    @JoinTable(
-            name = "pedido_produto",
-            joinColumns = @JoinColumn(name = "pedido_id"),
-            inverseJoinColumns = @JoinColumn(name = "produto_id")
+    @OneToMany(
+            mappedBy = "pedido",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
     )
-    private List<Produto> produtos;
+    private List<ItemPedido> itens = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private StatusPedido status;
 
-    private Double valorTotal;
+    @Column(
+            name = "valor_total",
+            nullable = false,
+            precision = 10,
+            scale = 2
+    )
+    private BigDecimal valorTotal;
+
+    @Column(name = "data_pedido", nullable = false)
     private LocalDateTime dataPedido;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    public void adicionarItem(ItemPedido item) {
+        itens.add(item);
+        item.setPedido(this);
+    }
 }
