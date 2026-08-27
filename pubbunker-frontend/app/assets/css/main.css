@@ -202,4 +202,93 @@ p {
     .campo-largo {
         grid-column: auto;
     }
+
+    .topo-acoes {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.navegacao-topo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.grade-avaliacoes {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(280px, 1fr)
+        );
+    gap: 16px;
+}
+
+.comentario-avaliacao {
+    margin: 16px 0 0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 640px) {
+    .topo-acoes,
+    .navegacao-topo {
+        width: 100%;
+    }
+
+    .topo-acoes {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .navegacao-topo {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .topo-acoes .p-button {
+        width: 100%;
+    }
+}
+.cabecalho-listagem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.cabecalho-listagem h2 {
+    margin-bottom: 0;
+}
+
+.grade-reservas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.detalhes-reserva {
+    display: grid;
+    gap: 10px;
+}
+
+.detalhes-reserva p {
+    margin: 0;
+}
+
+@media (max-width: 640px) {
+    .cabecalho-listagem {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .cabecalho-listagem .p-select {
+        width: 100%;
+    }
+}
 }

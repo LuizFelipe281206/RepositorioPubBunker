@@ -22,6 +22,18 @@ export const useAuth = () => {
     const { $api } = useNuxtApp()
     const { abrirPopup } = usePopup()
 
+    const rotaInicialPorRole = (roleUsuario) => {
+        if (roleUsuario === 'ADMIN') {
+            return '/admin'
+        }
+
+        if (roleUsuario === 'FUNCIONARIO') {
+            return '/reservas'
+        }
+
+        return '/cardapio'
+    }
+
     const restaurarSessao = () => {
         if (import.meta.server) return
 
@@ -76,9 +88,7 @@ export const useAuth = () => {
             )
 
             await navigateTo(
-                data.role === 'ADMIN'
-                    ? '/admin'
-                    : '/cardapio'
+                rotaInicialPorRole(data.role)
             )
         } catch {
             abrirPopup(

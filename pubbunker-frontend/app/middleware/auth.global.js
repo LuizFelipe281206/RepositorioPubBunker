@@ -7,6 +7,18 @@ export default defineNuxtRouteMiddleware((to) => {
 
     const paginaPublica = to.meta.public === true
 
+    const rotaInicial = () => {
+        if (auth.role.value === 'ADMIN') {
+            return '/admin'
+        }
+
+        if (auth.role.value === 'FUNCIONARIO') {
+            return '/reservas'
+        }
+
+        return '/cardapio'
+    }
+
     if (!auth.usuarioLogado.value && !paginaPublica) {
         return navigateTo('/login')
     }
@@ -15,17 +27,21 @@ export default defineNuxtRouteMiddleware((to) => {
         auth.usuarioLogado.value &&
         to.path === '/login'
     ) {
-        return navigateTo(
-            auth.role.value === 'ADMIN'
-                ? '/admin'
-                : '/cardapio'
-        )
+        return navigateTo(rotaInicial())
     }
 
+    const rolesPermitidas =
+        to.meta.roles ||
+        (
+            to.meta.role
+                ? [to.meta.role]
+                : []
+        )
+
     if (
-        to.meta.role &&
-        auth.role.value !== to.meta.role
+        rolesPermitidas.length &&
+        !rolesPermitidas.includes(auth.role.value)
     ) {
-        return navigateTo('/cardapio')
+        return navigateTo(rotaInicial())
     }
 })
