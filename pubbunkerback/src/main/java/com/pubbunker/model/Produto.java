@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "produto")
@@ -23,4 +24,7 @@ public class Produto {
     private Double preco;
     private String categoria;
     private Boolean ativo;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

@@ -37,5 +37,6 @@ public class Pedido {
 
     private Double valorTotal;
     private LocalDateTime dataPedido;
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }

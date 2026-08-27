@@ -1,5 +1,6 @@
 package com.pubbunker.model;
 
+import java.time.LocalDateTime;
 import com.pubbunker.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -28,4 +29,7 @@ public class Usuario {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }
