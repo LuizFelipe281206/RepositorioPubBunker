@@ -37,3 +37,72 @@ Content-Type: application/json
 
 ### Excluir avaliação
 DELETE http://localhost:8080/avaliacoes/1
+
+### 1. Listar reservas
+GET http://localhost:8080/reservas
+
+### 2. Criar reserva
+POST http://localhost:8080/reservas
+Content-Type: application/json
+
+{
+  "funcionarioId": 1,
+  "nomeCliente": "Felipe",
+  "quantidadePessoas": 4,
+  "dataHora": "2026-08-30T20:00:00"
+}
+
+### 3. Buscar reserva
+GET http://localhost:8080/reservas/1
+
+### 4. Atualizar dados
+PUT http://localhost:8080/reservas/1
+Content-Type: application/json
+
+{
+  "nomeCliente": "Felipe Carmona",
+  "quantidadePessoas": 5,
+  "dataHora": "2026-08-30T21:00:00"
+}
+
+### 5. Confirmar reserva
+PATCH http://localhost:8080/reservas/1/status
+Content-Type: application/json
+
+{
+  "status": "CONFIRMADA"
+}
+
+### 6. Concluir reserva
+PATCH http://localhost:8080/reservas/1/status
+Content-Type: application/json
+
+{
+  "status": "CONCLUIDA"
+}
+
+### 7. Listar concluídas
+GET http://localhost:8080/reservas/status/CONCLUIDA
+
+### 8. Listar pelo funcionário
+GET http://localhost:8080/reservas/funcionario/1
+
+### 9. Aplicar soft delete
+DELETE http://localhost:8080/reservas/2
+
+### 10. Confirmar exclusão
+GET http://localhost:8080/reservas/2
+
+### Criar reserva para cancelamento
+POST http://localhost:8080/reservas
+Content-Type: application/json
+
+{
+  "funcionarioId": 1,
+  "nomeCliente": "Cliente cancelamento",
+  "quantidadePessoas": 2,
+  "dataHora": "2026-08-31T19:00:00"
+}
+
+### Cancelar reserva
+PATCH http://localhost:8080/reservas/2/cancelar
