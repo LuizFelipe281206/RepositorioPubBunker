@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import com.pubbunker.enums.StatusPedido;
+import com.pubbunker.repository.PedidoRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +22,7 @@ import java.util.UUID;
 public class ComandaService {
 
     private final ComandaRepository comandaRepository;
+    private final PedidoRepository pedidoRepository;
 
     @Transactional(readOnly = true)
     public List<Comanda> listarTodas() {
@@ -112,6 +115,21 @@ public class ComandaService {
         if (comanda.getStatus() != StatusComanda.EM_USO) {
             throw new RegraNegocioException(
                     "A comanda não está em uso."
+            );
+        }
+        boolean possuiPedidosEmAndamento =
+                pedidoRepository
+                        .existsByComanda_IdAndStatusInAndDeletedAtIsNull(
+                                comanda.getId(),
+                                List.of(
+                                        StatusPedido.PENDENTE,
+                                        StatusPedido.EM_PREPARO
+                                )
+                        );
+
+        if (possuiPedidosEmAndamento) {
+            throw new RegraNegocioException(
+                    "A comanda possui pedidos em andamento."
             );
         }
 
