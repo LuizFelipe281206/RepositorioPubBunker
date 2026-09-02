@@ -38,11 +38,11 @@ p {
 
 .pagina-login {
     background:
-            linear-gradient(
-                    145deg,
-                    #181818,
-                    #3a0909
-            );
+        linear-gradient(
+            145deg,
+            #181818,
+            #3a0909
+        );
 }
 
 .login-card {
@@ -54,8 +54,9 @@ p {
     display: block;
     width: 140px;
     height: 140px;
-    object-fit: contain;
+    object-fit: cover;
     margin: 24px auto 0;
+    border-radius: 16px;
 }
 
 .form-login,
@@ -76,6 +77,8 @@ p {
 .campo-senha {
     width: 100%;
 }
+
+/* Cabeçalho */
 
 .topo {
     display: flex;
@@ -103,16 +106,70 @@ p {
 .logo {
     width: 80px;
     height: 80px;
-    object-fit: contain;
+    object-fit: cover;
+    border-radius: 12px;
 }
+
+.topo-acoes {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Mantém todos os botões do cabeçalho iguais */
+
+.topo-acoes .p-button {
+    width: 128px;
+    justify-content: center;
+}
+
+/* Navegação do cabeçalho */
+
+.navegacao-topo {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    padding: 4px;
+    background: #ffffff;
+    border-radius: 10px;
+}
+
+.navegacao-topo .botao-navegacao.p-button {
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    color: #666666;
+    box-shadow: none;
+    transition:
+        background-color 0.2s,
+        color 0.2s;
+}
+
+.navegacao-topo
+.botao-navegacao.p-button:not(:disabled):hover {
+    background: #f1f1f1;
+    color: #1f1f1f;
+}
+
+.navegacao-topo
+.botao-navegacao-ativo.p-button {
+    background: #e7e7e7;
+    color: #1f1f1f;
+    font-weight: 600;
+}
+
+/* Produtos */
 
 .lista-produtos {
     display: grid;
     grid-template-columns:
-    repeat(
-      auto-fit,
-      minmax(260px, 1fr)
-    );
+        repeat(
+            auto-fit,
+            minmax(260px, 1fr)
+        );
     gap: 16px;
     margin-bottom: 24px;
 }
@@ -127,9 +184,13 @@ p {
     flex-wrap: wrap;
 }
 
+/* Painéis */
+
 .painel {
     margin-bottom: 24px;
 }
+
+/* Carrinho */
 
 .item-carrinho {
     display: flex;
@@ -137,7 +198,7 @@ p {
     align-items: center;
     gap: 16px;
     padding: 8px 0;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #dddddd;
 }
 
 .total-pedido {
@@ -146,23 +207,27 @@ p {
 }
 
 .texto-secundario {
-    color: #666;
+    color: #666666;
 }
+
+/* Pedidos */
 
 .grade-pedidos {
     display: grid;
     grid-template-columns:
-    repeat(
-      auto-fit,
-      minmax(280px, 1fr)
-    );
+        repeat(
+            auto-fit,
+            minmax(280px, 1fr)
+        );
     gap: 16px;
 }
+
+/* Formulários */
 
 .form-grid {
     display: grid;
     grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+        repeat(2, minmax(0, 1fr));
     gap: 16px;
 }
 
@@ -178,45 +243,16 @@ p {
     align-self: end;
 }
 
+/* Popup */
+
 .popup-dialog {
     width: min(
-            420px,
-            calc(100vw - 32px)
+        420px,
+        calc(100vw - 32px)
     );
 }
 
-@media (max-width: 640px) {
-    .container {
-        padding: 14px;
-    }
-
-    .topo {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .campo-largo {
-        grid-column: auto;
-    }
-
-    .topo-acoes {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.navegacao-topo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
+/* Avaliações */
 
 .grade-avaliacoes {
     display: grid;
@@ -234,7 +270,97 @@ p {
     white-space: pre-wrap;
 }
 
+/* Reservas */
+
+.cabecalho-listagem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.cabecalho-listagem h2 {
+    margin-bottom: 0;
+}
+
+.grade-reservas {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(300px, 1fr)
+        );
+    gap: 16px;
+}
+
+.detalhes-reserva {
+    display: grid;
+    gap: 10px;
+}
+
+.detalhes-reserva p {
+    margin: 0;
+}
+
+.detalhes-pedido {
+    display: grid;
+    gap: 14px;
+}
+
+.lista-itens-pedido {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding-left: 22px;
+}
+
+.observacao-pedido {
+    padding: 12px;
+    background: #f3f3f3;
+    border-left: 4px solid var(--bunker-red);
+    border-radius: 6px;
+}
+
+.observacao-pedido p {
+    margin: 4px 0 0;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+.historico-pedidos {
+    margin-top: 24px;
+}
+
+.pedido-cliente-card {
+    height: 100%;
+}
+
+.status-pedido {
+    display: flex;
+    justify-content: flex-end;
+}
 @media (max-width: 640px) {
+    .container {
+        padding: 14px;
+    }
+
+    .topo {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .logo-area {
+        align-items: flex-start;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .campo-largo {
+        grid-column: auto;
+    }
+
     .topo-acoes,
     .navegacao-topo {
         width: 100%;
@@ -252,36 +378,9 @@ p {
 
     .topo-acoes .p-button {
         width: 100%;
+        justify-content: center;
     }
-}
-.cabecalho-listagem {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 16px;
-}
 
-.cabecalho-listagem h2 {
-    margin-bottom: 0;
-}
-
-.grade-reservas {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 16px;
-}
-
-.detalhes-reserva {
-    display: grid;
-    gap: 10px;
-}
-
-.detalhes-reserva p {
-    margin: 0;
-}
-
-@media (max-width: 640px) {
     .cabecalho-listagem {
         align-items: stretch;
         flex-direction: column;
@@ -291,4 +390,39 @@ p {
         width: 100%;
     }
 }
+
+.campo-observacao-pedido {
+    margin-top: 18px;
+}
+
+.seletor-quantidade .p-button {
+    width: 34px;
+    height: 34px;
+}
+.seletor-produto-dialogo {
+    display: grid;
+    gap: 20px;
+    text-align: center;
+}
+
+.seletor-produto-dialogo h3,
+.seletor-produto-dialogo p {
+    margin: 0;
+}
+
+.controle-quantidade-dialogo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+}
+
+.quantidade-dialogo {
+    min-width: 42px;
+    font-size: 1.3rem;
+    text-align: center;
+}
+
+.total-item-dialogo {
+    font-size: 1.1rem;
 }

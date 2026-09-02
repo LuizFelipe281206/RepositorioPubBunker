@@ -25,7 +25,5 @@ onMounted(carregarProdutos)
           @adicionar="adicionar"
       />
     </section>
-
-    <CartPanel />
   </main>
 </template>

@@ -1,6 +1,7 @@
 <script setup>
 const {
   carrinho,
+  observacao,
   remover,
   cancelar,
   finalizar
@@ -54,13 +55,36 @@ const formatarPreco = valor =>
         </span>
 
         <Button
-            icon="pi pi-minus"
+            icon="pi pi-trash"
             severity="danger"
             text
             rounded
-            aria-label="Remover uma unidade"
+            aria-label="Remover item"
             @click="remover(index)"
         />
+      </div>
+
+      <div
+          v-if="carrinho.length"
+          class="campo campo-observacao-pedido"
+      >
+        <label for="observacao-pedido">
+          Observação
+        </label>
+
+        <Textarea
+            id="observacao-pedido"
+            v-model="observacao"
+            rows="3"
+            maxlength="500"
+            auto-resize
+            fluid
+            placeholder="Ex.: sem cebola, molho separado..."
+        />
+
+        <small class="texto-secundario">
+          {{ observacao.length }}/500 caracteres
+        </small>
       </div>
 
       <p

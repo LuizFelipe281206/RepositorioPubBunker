@@ -3,28 +3,45 @@ export default defineNuxtRouteMiddleware((to) => {
 
     const auth = useAuth()
 
-    auth.restaurarSessao()
+    const {
+        comandaAtiva,
+        restaurarComanda
+    } = useComanda()
 
-    const paginaPublica = to.meta.public === true
+    auth.restaurarSessao()
+    restaurarComanda()
+
+    const sessaoAtiva =
+        auth.usuarioLogado.value ||
+        comandaAtiva.value
+
+    const roleAtual =
+        comandaAtiva.value
+            ? 'CLIENTE'
+            : auth.role.value
+
+    const paginaPublica =
+    to.meta.public === true ||
+    to.path.startsWith('/comanda/')
 
     const rotaInicial = () => {
-        if (auth.role.value === 'ADMIN') {
+        if (roleAtual === 'ADMIN') {
             return '/admin'
         }
 
-        if (auth.role.value === 'FUNCIONARIO') {
+        if (roleAtual === 'FUNCIONARIO') {
             return '/reservas'
         }
 
         return '/cardapio'
     }
 
-    if (!auth.usuarioLogado.value && !paginaPublica) {
+    if (!sessaoAtiva && !paginaPublica) {
         return navigateTo('/login')
     }
 
     if (
-        auth.usuarioLogado.value &&
+        sessaoAtiva &&
         to.path === '/login'
     ) {
         return navigateTo(rotaInicial())
@@ -40,7 +57,7 @@ export default defineNuxtRouteMiddleware((to) => {
 
     if (
         rolesPermitidas.length &&
-        !rolesPermitidas.includes(auth.role.value)
+        !rolesPermitidas.includes(roleAtual)
     ) {
         return navigateTo(rotaInicial())
     }

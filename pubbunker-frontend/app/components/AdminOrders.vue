@@ -13,6 +13,12 @@ const formatarPreco = valor =>
       style: 'currency',
       currency: 'BRL'
     })
+
+const formatarData = valor => {
+  if (!valor) return ''
+
+  return new Date(valor).toLocaleString('pt-BR')
+}
 </script>
 
 <template>
@@ -32,35 +38,72 @@ const formatarPreco = valor =>
           :key="pedido.id"
       >
         <template #title>
-          Pedido #{{ pedido.id }}
+          <span v-if="pedido.numeroComanda">
+            Comanda {{ pedido.numeroComanda }}
+            — Pedido #{{ pedido.id }}
+          </span>
+
+          <span v-else>
+            Pedido #{{ pedido.id }}
+          </span>
         </template>
 
         <template #subtitle>
-          Cliente: {{ pedido.clienteNome }} —
+          <span v-if="pedido.numeroComanda">
+            Pedido realizado pela comanda
+          </span>
+
+          <span v-else>
+            Cliente:
+            {{ pedido.clienteNome || 'Não identificado' }}
+          </span>
+
+          <br>
+
           Status: {{ pedido.status }}
+
+          <span v-if="pedido.dataPedido">
+            — {{ formatarData(pedido.dataPedido) }}
+          </span>
         </template>
 
         <template #content>
-          <ul v-if="pedido.itens?.length">
-            <li
-                v-for="item in pedido.itens"
-                :key="item.id"
+          <div class="detalhes-pedido">
+            <ul
+                v-if="pedido.itens?.length"
+                class="lista-itens-pedido"
             >
-              {{ item.quantidade }}x
-              {{ item.produtoNome }}
+              <li
+                  v-for="item in pedido.itens"
+                  :key="item.id"
+              >
+                <strong>
+                  {{ item.quantidade }}x
+                  {{ item.produtoNome }}
+                </strong>
 
-              — {{ formatarPreco(item.precoUnitario) }}
-              cada
+                — {{ formatarPreco(item.precoUnitario) }}
+                cada
 
-              — Subtotal:
-              {{ formatarPreco(item.subtotal) }}
-            </li>
-          </ul>
+                — Subtotal:
+                {{ formatarPreco(item.subtotal) }}
+              </li>
+            </ul>
 
-          <p>
-            <strong>Total:</strong>
-            {{ formatarPreco(pedido.valorTotal) }}
-          </p>
+            <div
+                v-if="pedido.observacao"
+                class="observacao-pedido"
+            >
+              <strong>Observação:</strong>
+
+              <p>{{ pedido.observacao }}</p>
+            </div>
+
+            <p class="total-pedido">
+              <strong>Total:</strong>
+              {{ formatarPreco(pedido.valorTotal) }}
+            </p>
+          </div>
         </template>
 
         <template #footer>
@@ -96,7 +139,7 @@ const formatarPreco = valor =>
             />
 
             <Button
-                label="Fechar"
+                label="Arquivar"
                 severity="secondary"
                 :disabled="
                   pedido.status !== 'CONCLUIDO'
