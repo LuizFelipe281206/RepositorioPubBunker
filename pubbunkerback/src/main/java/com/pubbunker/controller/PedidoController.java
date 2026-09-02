@@ -26,6 +26,16 @@ public class PedidoController {
                 .toList();
     }
 
+    @GetMapping("/comanda/{codigoAcesso}")
+    public List<PedidoResponseDTO> listarPorComanda(
+            @PathVariable String codigoAcesso
+    ) {
+        return service.listarPorComanda(codigoAcesso)
+                .stream()
+                .map(PedidoResponseDTO::new)
+                .toList();
+    }
+
     @GetMapping("/{id}")
     public PedidoResponseDTO buscarPorId(
             @PathVariable Long id

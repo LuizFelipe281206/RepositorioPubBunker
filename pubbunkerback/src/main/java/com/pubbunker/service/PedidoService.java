@@ -1,5 +1,6 @@
 package com.pubbunker.service;
 
+import com.pubbunker.model.Comanda;
 import com.pubbunker.dto.AtualizarStatusDTO;
 import com.pubbunker.dto.CriarPedidoDTO;
 import com.pubbunker.dto.ItemPedidoRequestDTO;
@@ -33,10 +34,28 @@ public class PedidoService {
     private final PedidoRepository pedidoRepository;
     private final ProdutoRepository produtoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ComandaService comandaService;
 
     @Transactional(readOnly = true)
     public List<Pedido> listarTodos() {
-        return pedidoRepository.findByDeletedAtIsNull();
+        return pedidoRepository
+                .findByDeletedAtIsNullOrderByDataPedidoAsc();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Pedido> listarPorComanda(
+            String codigoAcesso
+    ) {
+        Comanda comanda =
+                comandaService.buscarAtivaPorCodigo(
+                        codigoAcesso
+                );
+
+        return pedidoRepository
+                .findByComanda_IdAndDataPedidoGreaterThanEqualAndDeletedAtIsNullOrderByDataPedidoAsc(
+                        comanda.getId(),
+                        comanda.getDataAbertura()
+                );
     }
 
     @Transactional(readOnly = true)
@@ -51,27 +70,53 @@ public class PedidoService {
     }
 
     public Pedido criar(CriarPedidoDTO dto) {
-        if (dto.getClienteId() == null) {
+        boolean possuiComanda =
+                dto.getCodigoComanda() != null &&
+                        !dto.getCodigoComanda().isBlank();
+
+        boolean possuiCliente =
+                dto.getClienteId() != null;
+
+        if (!possuiComanda && !possuiCliente) {
             throw new RegraNegocioException(
-                    "O cliente deve ser informado."
+                    "A comanda deve ser informada."
             );
         }
 
-        if (dto.getItens() == null || dto.getItens().isEmpty()) {
+        if (possuiComanda && possuiCliente) {
+            throw new RegraNegocioException(
+                    "Informe somente a comanda ou o cliente."
+            );
+        }
+
+        if (
+                dto.getItens() == null ||
+                        dto.getItens().isEmpty()
+        ) {
             throw new RegraNegocioException(
                     "O pedido deve possuir pelo menos um item."
             );
         }
+        Comanda comanda = null;
+        Usuario cliente = null;
 
-        Usuario cliente = usuarioRepository
-                .findByIdAndDeletedAtIsNull(dto.getClienteId())
-                .orElseThrow(
-                        () -> new RecursoNaoEncontradoException(
-                                "Usuário não encontrado com id: "
-                                        + dto.getClienteId()
-                        )
-                );
-
+        if (possuiComanda) {
+            comanda = comandaService.buscarAtivaPorCodigo(
+                    dto.getCodigoComanda()
+            );
+        } else {
+            cliente = usuarioRepository
+                    .findByIdAndDeletedAtIsNull(
+                            dto.getClienteId()
+                    )
+                    .orElseThrow(
+                            () ->
+                                    new RecursoNaoEncontradoException(
+                                            "Usuário não encontrado com id: "
+                                                    + dto.getClienteId()
+                                    )
+                    );
+        }
         Map<Long, Integer> quantidadesPorProduto =
                 dto.getItens()
                         .stream()
@@ -106,9 +151,21 @@ public class PedidoService {
 
         Pedido pedido = new Pedido();
 
+        pedido.setComanda(comanda);
         pedido.setCliente(cliente);
         pedido.setStatus(StatusPedido.PENDENTE);
         pedido.setDataPedido(LocalDateTime.now());
+
+        if (
+                dto.getObservacao() == null ||
+                        dto.getObservacao().isBlank()
+        ) {
+            pedido.setObservacao(null);
+        } else {
+            pedido.setObservacao(
+                    dto.getObservacao().trim()
+            );
+        }
 
         BigDecimal valorTotal = BigDecimal.ZERO;
 

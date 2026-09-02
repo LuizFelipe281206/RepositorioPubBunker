@@ -22,8 +22,12 @@ public class Pedido {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "cliente_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comanda_id")
+    private Comanda comanda;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cliente_id")
     private Usuario cliente;
 
     @OneToMany(
@@ -44,6 +48,9 @@ public class Pedido {
             scale = 2
     )
     private BigDecimal valorTotal;
+
+    @Column(length = 500)
+    private String observacao;
 
     @Column(name = "data_pedido", nullable = false)
     private LocalDateTime dataPedido;
