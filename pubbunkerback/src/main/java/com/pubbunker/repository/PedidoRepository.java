@@ -29,4 +29,9 @@ public interface PedidoRepository
             Long comandaId,
             Collection<StatusPedido> status
     );
+
+    List<Pedido>
+    findByCliente_IdAndDeletedAtIsNullOrderByDataPedidoDesc(
+            Long clienteId
+    );
 }

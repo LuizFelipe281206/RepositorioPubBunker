@@ -35,7 +35,15 @@ public class PedidoController {
                 .map(PedidoResponseDTO::new)
                 .toList();
     }
-
+    @GetMapping("/cliente/{clienteId}")
+    public List<PedidoResponseDTO> listarPorCliente(
+            @PathVariable Long clienteId
+    ) {
+        return service.listarPorCliente(clienteId)
+                .stream()
+                .map(PedidoResponseDTO::new)
+                .toList();
+    }
     @GetMapping("/{id}")
     public PedidoResponseDTO buscarPorId(
             @PathVariable Long id

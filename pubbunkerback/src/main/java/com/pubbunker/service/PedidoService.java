@@ -17,7 +17,7 @@ import com.pubbunker.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.pubbunker.enums.Role;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -57,7 +57,36 @@ public class PedidoService {
                         comanda.getDataAbertura()
                 );
     }
+    @Transactional(readOnly = true)
+    public List<Pedido> listarPorCliente(
+            Long clienteId
+    ) {
+        if (clienteId == null) {
+            throw new RegraNegocioException(
+                    "O cliente deve ser informado."
+            );
+        }
 
+        Usuario cliente = usuarioRepository
+                .findByIdAndDeletedAtIsNull(clienteId)
+                .orElseThrow(
+                        () -> new RecursoNaoEncontradoException(
+                                "Cliente não encontrado com id: "
+                                        + clienteId
+                        )
+                );
+
+        if (cliente.getRole() != Role.CLIENTE) {
+            throw new RegraNegocioException(
+                    "O usuário informado não é um cliente."
+            );
+        }
+
+        return pedidoRepository
+                .findByCliente_IdAndDeletedAtIsNullOrderByDataPedidoDesc(
+                        clienteId
+                );
+    }
     @Transactional(readOnly = true)
     public Pedido buscarPorId(Long id) {
         return pedidoRepository
