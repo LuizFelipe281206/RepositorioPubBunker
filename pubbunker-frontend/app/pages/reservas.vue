@@ -265,8 +265,9 @@ const statusSeveridade = status => ({
         <div class="form-grid">
           <div class="campo campo-largo">
             <label for="nome-cliente">
-              Nome do cliente
-            </label>
+  Nome do cliente
+  <span class="campo-obrigatorio">*</span>
+</label>
 
             <InputText
                 id="nome-cliente"
@@ -278,8 +279,9 @@ const statusSeveridade = status => ({
 
           <div class="campo">
             <label for="quantidade-pessoas">
-              Quantidade de pessoas
-            </label>
+  Quantidade de pessoas
+  <span class="campo-obrigatorio">*</span>
+</label>
 
             <InputNumber
                 id="quantidade-pessoas"
@@ -292,8 +294,9 @@ const statusSeveridade = status => ({
 
           <div class="campo">
             <label for="data-hora">
-              Data e hora
-            </label>
+  Data e hora
+  <span class="campo-obrigatorio">*</span>
+</label>
 
             <InputText
                 id="data-hora"

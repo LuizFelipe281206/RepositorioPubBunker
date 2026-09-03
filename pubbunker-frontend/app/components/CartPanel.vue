@@ -7,12 +7,23 @@ const {
   finalizar
 } = useCarrinho()
 
+const precoUnitarioItem = item => {
+  return Number(
+      item.precoUnitario ?? item.preco ?? 0
+  )
+}
+
+const subtotalItem = item => {
+  return (
+      precoUnitarioItem(item) *
+      Number(item.quantidade || 1)
+  )
+}
+
 const total = computed(() =>
     carrinho.value.reduce(
         (soma, item) =>
-            soma +
-            Number(item.preco) *
-            Number(item.quantidade || 1),
+            soma + subtotalItem(item),
         0
     )
 )
@@ -40,19 +51,53 @@ const formatarPreco = valor =>
 
       <div
           v-for="(item, index) in carrinho"
-          :key="item.id"
+          :key="
+            item.chaveConfiguracao ||
+            `${item.id}-${index}`
+          "
           class="item-carrinho"
       >
-        <span>
-          {{ item.quantidade }}x
-          {{ item.nome }} —
-          {{
-            formatarPreco(
-                Number(item.preco) *
-                Number(item.quantidade)
-            )
-          }}
-        </span>
+        <div class="item-carrinho-conteudo">
+          <div class="item-carrinho-cabecalho">
+            <strong>
+              {{ item.quantidade }}x
+              {{ item.nome }}
+            </strong>
+
+            <span>
+              {{ formatarPreco(subtotalItem(item)) }}
+            </span>
+          </div>
+
+          <ul
+              v-if="
+                item.adicionaisSelecionados?.length
+              "
+              class="lista-adicionais-carrinho"
+          >
+            <li
+                v-for="
+                  adicional in
+                  item.adicionaisSelecionados
+                "
+                :key="adicional.id"
+            >
+              + {{ adicional.nome }}
+
+              <span>
+                {{
+                  formatarPreco(adicional.preco)
+                }}
+                por unidade
+              </span>
+            </li>
+          </ul>
+
+          <small class="preco-unitario-carrinho">
+            Valor por unidade:
+            {{ formatarPreco(precoUnitarioItem(item)) }}
+          </small>
+        </div>
 
         <Button
             icon="pi pi-trash"
@@ -116,3 +161,54 @@ const formatarPreco = valor =>
     </template>
   </Card>
 </template>
+
+<style scoped>
+.item-carrinho-conteudo {
+  display: grid;
+  flex: 1;
+  gap: 7px;
+  min-width: 0;
+}
+
+.item-carrinho-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.item-carrinho-cabecalho span {
+  white-space: nowrap;
+  color: var(--bunker-wine);
+  font-weight: 700;
+}
+
+.lista-adicionais-carrinho {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--bunker-muted);
+}
+
+.lista-adicionais-carrinho li span {
+  margin-left: 5px;
+  font-size: 0.85rem;
+}
+
+.preco-unitario-carrinho {
+  color: var(--bunker-muted);
+}
+
+@media (max-width: 480px) {
+  .item-carrinho-cabecalho {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .lista-adicionais-carrinho li span {
+    display: block;
+    margin-left: 0;
+  }
+}
+</style>

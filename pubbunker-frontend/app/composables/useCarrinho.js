@@ -23,25 +23,64 @@ export const useCarrinho = () => {
 
     const adicionar = (
         produto,
-        quantidade = 1
+        quantidade = 1,
+        adicionais = []
     ) => {
         const quantidadeSelecionada = Math.max(
             1,
             Number(quantidade) || 1
         )
 
+        const adicionaisUnicos = (
+            Array.isArray(adicionais)
+                ? adicionais
+                : []
+        ).filter(
+            (adicional, indice, lista) =>
+                lista.findIndex(
+                    item => item.id === adicional.id
+                ) === indice
+        )
+
+        const adicionaisIds = adicionaisUnicos
+                .map(adicional => adicional.id)
+                .sort((a, b) => a - b)
+
+        const chaveConfiguracao =
+            `${produto.id}:${adicionaisIds.join('-')}`
+
         const produtoExistente =
             carrinho.value.find(
-                item => item.id === produto.id
+                item =>
+                    item.chaveConfiguracao ===
+                    chaveConfiguracao
             )
 
         if (produtoExistente) {
             produtoExistente.quantidade +=
                 quantidadeSelecionada
         } else {
+            const valorAdicionais =
+                adicionaisUnicos.reduce(
+                    (soma, adicional) =>
+                        soma +
+                        Number(adicional.preco),
+                    0
+                )
+
             carrinho.value.push({
                 ...produto,
-                quantidade: quantidadeSelecionada
+                quantidade:
+                    quantidadeSelecionada,
+
+                adicionaisSelecionados:
+                    adicionaisUnicos,
+
+                precoUnitario:
+                    Number(produto.preco) +
+                    valorAdicionais,
+
+                chaveConfiguracao
             })
         }
 
@@ -107,8 +146,19 @@ export const useCarrinho = () => {
                         itens: carrinho.value.map(
                             item => ({
                                 produtoId: item.id,
+
                                 quantidade:
-                                    item.quantidade
+                                    item.quantidade,
+
+                                adicionaisIds:
+                                    (
+                                        item
+                                            .adicionaisSelecionados ||
+                                        []
+                                    ).map(
+                                        adicional =>
+                                            adicional.id
+                                    )
                             })
                         )
                     }
@@ -118,7 +168,8 @@ export const useCarrinho = () => {
                 const pedidoJaExiste =
                     pedidosComanda.value.some(
                         pedido =>
-                            pedido.id === pedidoCriado.id
+                            pedido.id ===
+                            pedidoCriado.id
                     )
 
                 if (!pedidoJaExiste) {
@@ -130,7 +181,8 @@ export const useCarrinho = () => {
                 const pedidoJaExiste =
                     pedidosCliente.value.some(
                         pedido =>
-                            pedido.id === pedidoCriado.id
+                            pedido.id ===
+                            pedidoCriado.id
                     )
 
                 if (!pedidoJaExiste) {

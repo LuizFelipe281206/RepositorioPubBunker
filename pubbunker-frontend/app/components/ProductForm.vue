@@ -12,6 +12,13 @@ const emit = defineEmits([
 ])
 
 const { salvarProduto } = useProdutos()
+
+const {
+  adicionais,
+  carregandoAdicionais,
+  carregarAdicionais
+} = useAdicionais()
+
 const { abrirPopup } = usePopup()
 
 const formularioVazio = () => ({
@@ -19,10 +26,17 @@ const formularioVazio = () => ({
   descricao: '',
   preco: null,
   categoria: '',
-  ativo: true
+  ativo: true,
+  adicionaisIds: []
 })
 
 const form = reactive(formularioVazio())
+
+onMounted(async () => {
+  if (!adicionais.value.length) {
+    await carregarAdicionais()
+  }
+})
 
 watch(
     () => props.produto,
@@ -35,7 +49,14 @@ watch(
                 descricao: produto.descricao,
                 preco: Number(produto.preco),
                 categoria: produto.categoria,
-                ativo: produto.ativo
+                ativo: produto.ativo,
+                adicionaisIds:
+                    produto
+                        .adicionaisDisponiveis
+                        ?.map(
+                            adicional =>
+                                adicional.id
+                        ) || []
               }
               : formularioVazio()
       )
@@ -45,11 +66,17 @@ watch(
     }
 )
 
+const formatarPreco = valor =>
+    Number(valor).toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    })
+
 const salvar = async () => {
   if (
-      !form.nome ||
-      !form.descricao ||
-      !form.preco ||
+      !form.nome.trim() ||
+      !form.descricao.trim() ||
+      form.preco === null ||
       !form.categoria
   ) {
     abrirPopup(
@@ -74,8 +101,14 @@ const salvar = async () => {
   try {
     await salvarProduto(
         {
-          ...form,
-          preco: Number(form.preco)
+          nome: form.nome.trim(),
+          descricao: form.descricao.trim(),
+          preco: Number(form.preco),
+          categoria: form.categoria,
+          ativo: form.ativo,
+          adicionaisIds: [
+            ...form.adicionaisIds
+          ]
         },
         props.produto?.id
     )
@@ -97,9 +130,10 @@ const salvar = async () => {
     )
 
     emit('salvo')
-  } catch {
+  } catch (erro) {
     abrirPopup(
         'Erro',
+        erro.response?.data?.mensagem ||
         'Não foi possível salvar o produto.',
         'erro'
     )
@@ -120,11 +154,15 @@ const salvar = async () => {
     <template #content>
       <div class="form-grid">
         <div class="campo campo-largo">
-          <label for="nome">Nome</label>
+          <label for="nome">
+            Nome
+            <span class="campo-obrigatorio">*</span>
+          </label>
 
           <InputText
               id="nome"
               v-model="form.nome"
+              maxlength="100"
               fluid
           />
         </div>
@@ -132,24 +170,30 @@ const salvar = async () => {
         <div class="campo campo-largo">
           <label for="descricao">
             Descrição
+            <span class="campo-obrigatorio">*</span>
           </label>
 
           <InputText
               id="descricao"
               v-model="form.descricao"
+              maxlength="500"
               fluid
           />
         </div>
 
         <div class="campo">
-          <label for="preco">Preço</label>
+          <label for="preco">
+            Preço
+            <span class="campo-obrigatorio">*</span>
+          </label>
 
           <InputNumber
-              id="preco"
+              input-id="preco"
               v-model="form.preco"
               mode="currency"
               currency="BRL"
               locale="pt-BR"
+              :min="0.01"
               fluid
           />
         </div>
@@ -157,19 +201,56 @@ const salvar = async () => {
         <div class="campo">
           <label for="categoria">
             Categoria
+            <span class="campo-obrigatorio">*</span>
           </label>
 
           <Select
               id="categoria"
               v-model="form.categoria"
               :options="[
-              'Bebidas',
-              'Porções',
-              'Lanches'
-            ]"
+                'Bebidas',
+                'Porções',
+                'Lanches'
+              ]"
               placeholder="Selecione"
               fluid
           />
+        </div>
+
+        <div class="campo campo-largo">
+          <label for="adicionais-produto">
+            Adicionais disponíveis
+          </label>
+
+          <MultiSelect
+              input-id="adicionais-produto"
+              v-model="form.adicionaisIds"
+              :options="adicionais"
+              option-label="nome"
+              option-value="id"
+              display="chip"
+              filter
+              :loading="carregandoAdicionais"
+              placeholder="Selecione os adicionais"
+              empty-message="Nenhum adicional cadastrado"
+              empty-filter-message="Nenhum adicional encontrado"
+              fluid
+          >
+            <template #option="{ option }">
+              <div class="opcao-adicional-produto">
+                <span>{{ option.nome }}</span>
+
+                <small>
+                  + {{ formatarPreco(option.preco) }}
+                </small>
+              </div>
+            </template>
+          </MultiSelect>
+
+          <small class="texto-secundario">
+            Os adicionais selecionados poderão ser
+            escolhidos pelo cliente neste produto.
+          </small>
         </div>
 
         <div class="campo checkbox-campo">
@@ -190,10 +271,10 @@ const salvar = async () => {
       <div class="acoes-card">
         <Button
             :label="
-            produto
-              ? 'Atualizar'
-              : 'Cadastrar'
-          "
+              produto
+                  ? 'Atualizar'
+                  : 'Cadastrar'
+            "
             icon="pi pi-save"
             @click="salvar"
         />
@@ -208,3 +289,16 @@ const salvar = async () => {
     </template>
   </Card>
 </template>
+
+<style scoped>
+.opcao-adicional-produto {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+}
+
+.opcao-adicional-produto small {
+  color: var(--bunker-muted);
+}
+</style>

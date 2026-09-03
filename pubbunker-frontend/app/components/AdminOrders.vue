@@ -92,20 +92,39 @@ const formatarData = valor => {
                 class="lista-itens-pedido"
             >
               <li
-                  v-for="item in pedido.itens"
-                  :key="item.id"
-              >
-                <strong>
-                  {{ item.quantidade }}x
-                  {{ item.produtoNome }}
-                </strong>
+    v-for="item in pedido.itens"
+    :key="item.id"
+>
+  <div class="item-pedido-principal">
+    <strong>
+      {{ item.quantidade }}x
+      {{ item.produtoNome }}
+    </strong>
 
-                — {{ formatarPreco(item.precoUnitario) }}
-                cada
+    <span>
+      {{ formatarPreco(item.precoUnitario) }}
+      cada — subtotal:
+      {{ formatarPreco(item.subtotal) }}
+    </span>
+  </div>
 
-                — Subtotal:
-                {{ formatarPreco(item.subtotal) }}
-              </li>
+  <ul
+      v-if="item.adicionais?.length"
+      class="lista-adicionais-pedido"
+  >
+    <li
+        v-for="adicional in item.adicionais"
+        :key="adicional.id"
+    >
+      + {{ adicional.nome }}
+
+      <span>
+        {{ formatarPreco(adicional.preco) }}
+        por unidade
+      </span>
+    </li>
+  </ul>
+</li>
             </ul>
 
             <div
