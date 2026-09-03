@@ -27,20 +27,30 @@ const entrar = async () => {
 
 <template>
   <main class="pagina-login">
-    <Card class="login-card">
-      <template #header>
+    <section class="login-mobile">
+      <header class="login-marca">
         <img
             :src="logo"
-            alt="PubBunker"
+            alt="Logo do PubBunker"
             class="logo-login"
         >
-      </template>
 
-      <template #title>
-        PubBunker
-      </template>
+        <span class="login-selo">
+          Gastro Pub
+        </span>
 
-      <template #content>
+        <h1>PubBunker</h1>
+      </header>
+
+      <div class="login-formulario">
+        <header class="login-cabecalho">
+          <h2>Bem-vindo</h2>
+
+          <p>
+            Entre com seus dados para continuar.
+          </p>
+        </header>
+
         <form
             class="form-login"
             @submit.prevent="entrar"
@@ -48,6 +58,7 @@ const entrar = async () => {
           <div class="campo">
             <label for="email">
               E-mail
+              <span class="campo-obrigatorio">*</span>
             </label>
 
             <InputText
@@ -55,6 +66,7 @@ const entrar = async () => {
                 v-model="formulario.email"
                 type="email"
                 autocomplete="username"
+                required
                 fluid
             />
           </div>
@@ -62,6 +74,7 @@ const entrar = async () => {
           <div class="campo">
             <label for="senha">
               Senha
+              <span class="campo-obrigatorio">*</span>
             </label>
 
             <Password
@@ -69,6 +82,7 @@ const entrar = async () => {
                 v-model="formulario.senha"
                 :feedback="false"
                 toggle-mask
+                required
                 fluid
                 input-class="campo-senha"
                 autocomplete="current-password"
@@ -80,10 +94,11 @@ const entrar = async () => {
               label="Entrar"
               icon="pi pi-sign-in"
               :loading="enviando"
+              class="botao-login"
               fluid
           />
         </form>
-      </template>
-    </Card>
+      </div>
+    </section>
   </main>
 </template>

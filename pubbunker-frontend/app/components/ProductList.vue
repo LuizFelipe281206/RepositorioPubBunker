@@ -79,20 +79,25 @@ const formatarPreco = valor =>
       </template>
 
       <template #content>
-        <p>{{ produto.descricao }}</p>
+  <div class="produto-conteudo">
+    <p class="produto-descricao">
+      {{ produto.descricao }}
+    </p>
 
-        <p>
-          <strong>
-            {{ formatarPreco(produto.preco) }}
-          </strong>
-        </p>
+    <div class="produto-detalhes">
+      <strong class="produto-preco">
+        {{ formatarPreco(produto.preco) }}
+      </strong>
 
-        <Tag
-            v-if="produto.categoria"
-            :value="produto.categoria"
-            severity="secondary"
-        />
-      </template>
+      <Tag
+          v-if="produto.categoria"
+          :value="produto.categoria"
+          severity="secondary"
+          class="produto-categoria"
+      />
+    </div>
+  </div>
+</template>
 
       <template #footer>
         <div class="acoes-card">

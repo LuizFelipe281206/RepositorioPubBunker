@@ -61,10 +61,9 @@ const paginaAtual = (caminho) =>
         <h1>PubBunker</h1>
 
         <p>
-          Bem-vindo,
-          <strong>{{ nomeUsuario }}</strong>
-          ({{ role }})
-        </p>
+  Bem-vindo,
+  <strong>{{ nomeUsuario }}</strong>
+</p>
       </div>
     </div>
 
@@ -120,7 +119,16 @@ const paginaAtual = (caminho) =>
         }"
         @click="irPara('/admin')"
     />
-
+        <Button
+    label="Comandas"
+    icon="pi pi-qrcode"
+    class="botao-navegacao"
+    :class="{
+      'botao-navegacao-ativo':
+          paginaAtual('/admin/comandas')
+    }"
+    @click="irPara('/admin/comandas')"
+/>
     <Button
         label="Reservas"
         icon="pi pi-calendar"
