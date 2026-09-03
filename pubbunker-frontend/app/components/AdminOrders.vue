@@ -1,12 +1,28 @@
 <script setup>
 const {
   pedidos,
+  carregandoPedidos,
   carregarPedidos,
   atualizarStatus,
   fecharPedido
 } = usePedidos()
 
-onMounted(carregarPedidos)
+let intervaloAtualizacao = null
+
+onMounted(async () => {
+  await carregarPedidos()
+
+  intervaloAtualizacao = setInterval(
+      () => carregarPedidos(true),
+      5000
+  )
+})
+
+onBeforeUnmount(() => {
+  if (intervaloAtualizacao) {
+    clearInterval(intervaloAtualizacao)
+  }
+})
 
 const formatarPreco = valor =>
     Number(valor).toLocaleString('pt-BR', {
@@ -15,7 +31,9 @@ const formatarPreco = valor =>
     })
 
 const formatarData = valor => {
-  if (!valor) return ''
+  if (!valor) {
+    return ''
+  }
 
   return new Date(valor).toLocaleString('pt-BR')
 }

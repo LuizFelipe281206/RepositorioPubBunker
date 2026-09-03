@@ -14,46 +14,52 @@ export const useCarrinho = () => {
 
     const { usuarioId } = useAuth()
     const { codigoComanda } = useComanda()
+
     const { pedidosComanda } =
         usePedidosComanda()
 
-    const adicionar = (
-    produto,
-    quantidade = 1
-) => {
-    const quantidadeSelecionada = Math.max(
-        1,
-        Number(quantidade) || 1
-    )
+    const { pedidosCliente } =
+        usePedidosCliente()
 
-    const produtoExistente =
-        carrinho.value.find(
-            item => item.id === produto.id
+    const adicionar = (
+        produto,
+        quantidade = 1
+    ) => {
+        const quantidadeSelecionada = Math.max(
+            1,
+            Number(quantidade) || 1
         )
 
-    if (produtoExistente) {
-        produtoExistente.quantidade +=
-            quantidadeSelecionada
-    } else {
-        carrinho.value.push({
-            ...produto,
-            quantidade: quantidadeSelecionada
-        })
+        const produtoExistente =
+            carrinho.value.find(
+                item => item.id === produto.id
+            )
+
+        if (produtoExistente) {
+            produtoExistente.quantidade +=
+                quantidadeSelecionada
+        } else {
+            carrinho.value.push({
+                ...produto,
+                quantidade: quantidadeSelecionada
+            })
+        }
+
+        abrirPopup(
+            'Produto adicionado',
+            `${quantidadeSelecionada}x ${produto.nome} adicionado ao pedido.`
+        )
     }
 
-    abrirPopup(
-        'Produto adicionado',
-        `${quantidadeSelecionada}x ${produto.nome} adicionado ao pedido.`
-    )
-}
-
     const remover = (index) => {
-    carrinho.value.splice(index, 1)
-}
-const cancelar = () => {
-    carrinho.value = []
-    observacao.value = ''
-}
+        carrinho.value.splice(index, 1)
+    }
+
+    const cancelar = () => {
+        carrinho.value = []
+        observacao.value = ''
+    }
+
     const finalizar = async () => {
         if (carrinho.value.length === 0) {
             abrirPopup(
@@ -88,34 +94,61 @@ const cancelar = () => {
             }
 
         try {
-    const { data: pedidoCriado } =
-        await $api.post('/pedidos', {
-            ...identificacao,
+            const { data: pedidoCriado } =
+                await $api.post(
+                    '/pedidos',
+                    {
+                        ...identificacao,
 
-            observacao:
-                observacao.value.trim() || null,
+                        observacao:
+                            observacao.value.trim() ||
+                            null,
 
-            itens: carrinho.value.map(
-                item => ({
-                    produtoId: item.id,
-                    quantidade: item.quantidade
-                })
-            )
-        })
+                        itens: carrinho.value.map(
+                            item => ({
+                                produtoId: item.id,
+                                quantidade:
+                                    item.quantidade
+                            })
+                        )
+                    }
+                )
 
-    if (codigoComanda.value) {
-        pedidosComanda.value.push(
-            pedidoCriado
-        )
-    }
+            if (codigoComanda.value) {
+                const pedidoJaExiste =
+                    pedidosComanda.value.some(
+                        pedido =>
+                            pedido.id === pedidoCriado.id
+                    )
 
-    carrinho.value = []
-    observacao.value = ''
+                if (!pedidoJaExiste) {
+                    pedidosComanda.value.push(
+                        pedidoCriado
+                    )
+                }
+            } else {
+                const pedidoJaExiste =
+                    pedidosCliente.value.some(
+                        pedido =>
+                            pedido.id === pedidoCriado.id
+                    )
+
+                if (!pedidoJaExiste) {
+                    pedidosCliente.value.unshift(
+                        pedidoCriado
+                    )
+                }
+            }
+
+            carrinho.value = []
+            observacao.value = ''
 
             abrirPopup(
                 'Pedido realizado',
                 'Seu pedido foi enviado com sucesso.'
             )
+
+            return pedidoCriado
         } catch (erro) {
             abrirPopup(
                 'Erro',
@@ -123,15 +156,17 @@ const cancelar = () => {
                 'Não foi possível finalizar o pedido.',
                 'erro'
             )
+
+            return null
         }
     }
 
     return {
-    carrinho,
-    observacao,
-    adicionar,
-    remover,
-    cancelar,
-    finalizar
-}
+        carrinho,
+        observacao,
+        adicionar,
+        remover,
+        cancelar,
+        finalizar
+    }
 }

@@ -11,10 +11,14 @@ const {
   carregarComandas,
   criarComanda,
   abrirComanda,
-  fecharComanda
+  fecharComanda,
+  arquivarComanda
 } = useComandas()
 
 const { abrirPopup } = usePopup()
+
+const confirmacaoArquivamentoVisivel = ref(false)
+const comandaParaArquivar = ref(null)
 
 const numeroNovaComanda = ref(null)
 const criandoComanda = ref(false)
@@ -155,7 +159,35 @@ const copiarAcesso = async (comanda) => {
     )
   }
 }
+const solicitarArquivamento = (comanda) => {
+  comandaParaArquivar.value = comanda
+  confirmacaoArquivamentoVisivel.value = true
+}
 
+const cancelarArquivamento = () => {
+  confirmacaoArquivamentoVisivel.value = false
+  comandaParaArquivar.value = null
+}
+
+const confirmarArquivamento = async () => {
+  if (!comandaParaArquivar.value) {
+    return
+  }
+
+  const id = comandaParaArquivar.value.id
+
+  processandoId.value = id
+
+  try {
+    const arquivada = await arquivarComanda(id)
+
+    if (arquivada) {
+      cancelarArquivamento()
+    }
+  } finally {
+    processandoId.value = null
+  }
+}
 const formatarData = (data) => {
   if (!data) {
     return '—'
@@ -355,6 +387,15 @@ const severidadeStatus = (status) =>
                 severity="secondary"
                 @click="mostrarQrCode(comanda)"
             />
+            <Button
+    label="Arquivar"
+    icon="pi pi-trash"
+    severity="danger"
+    outlined
+    :disabled="comanda.status === 'EM_USO'"
+    :loading="processandoId === comanda.id"
+    @click="solicitarArquivamento(comanda)"
+/>
           </div>
         </template>
       </Card>
@@ -407,5 +448,42 @@ const severidadeStatus = (status) =>
         </template>
       </div>
     </Dialog>
+    <Dialog
+    v-model:visible="confirmacaoArquivamentoVisivel"
+    modal
+    header="Arquivar comanda"
+    :style="{ width: 'min(92vw, 420px)' }"
+    @hide="comandaParaArquivar = null"
+>
+  <p v-if="comandaParaArquivar">
+    Tem certeza que deseja arquivar a
+    <strong>
+      Comanda {{ comandaParaArquivar.numero }}
+    </strong>?
+  </p>
+
+  <p class="texto-secundario">
+    Ela deixará de aparecer na listagem de comandas.
+  </p>
+
+  <template #footer>
+    <Button
+        label="Cancelar"
+        severity="secondary"
+        text
+        @click="cancelarArquivamento"
+    />
+
+    <Button
+        label="Arquivar"
+        icon="pi pi-trash"
+        severity="danger"
+        :loading="
+          processandoId === comandaParaArquivar?.id
+        "
+        @click="confirmarArquivamento"
+    />
+  </template>
+</Dialog>
   </main>
 </template>

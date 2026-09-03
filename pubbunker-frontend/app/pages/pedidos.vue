@@ -4,7 +4,8 @@ definePageMeta({
 })
 
 const {
-  comandaAtual
+  comandaAtual,
+  comandaAtiva
 } = useComanda()
 
 const {
@@ -13,13 +14,52 @@ const {
   carregarPedidosComanda
 } = usePedidosComanda()
 
+const {
+  pedidosCliente,
+  carregandoPedidosCliente,
+  carregarPedidosCliente
+} = usePedidosCliente()
+
 let intervaloAtualizacao = null
 
+const pedidosExibidos = computed(() => {
+  return comandaAtiva.value
+      ? pedidosComanda.value
+      : pedidosCliente.value
+})
+
+const carregandoPedidos = computed(() => {
+  return comandaAtiva.value
+      ? carregandoPedidosComanda.value
+      : carregandoPedidosCliente.value
+})
+
+const tituloPedidos = computed(() => {
+  if (comandaAtiva.value) {
+    return `Pedidos da comanda ${
+        comandaAtual.value?.numero || ''
+    }`
+  }
+
+  return 'Meus pedidos'
+})
+
+const carregarPedidos = async (
+    silencioso = false
+) => {
+  if (comandaAtiva.value) {
+    await carregarPedidosComanda(silencioso)
+    return
+  }
+
+  await carregarPedidosCliente(silencioso)
+}
+
 onMounted(async () => {
-  await carregarPedidosComanda()
+  await carregarPedidos()
 
   intervaloAtualizacao = setInterval(
-      () => carregarPedidosComanda(true),
+      () => carregarPedidos(true),
       10000
   )
 })
@@ -37,7 +77,9 @@ const formatarPreco = valor =>
     })
 
 const formatarData = valor => {
-  if (!valor) return ''
+  if (!valor) {
+    return ''
+  }
 
   return new Date(valor).toLocaleString('pt-BR')
 }
@@ -78,10 +120,7 @@ const dadosStatus = status => {
     <section class="historico-pedidos">
       <div class="cabecalho-listagem">
         <div>
-          <h2>
-            Pedidos da comanda
-            {{ comandaAtual?.numero }}
-          </h2>
+          <h2>{{ tituloPedidos }}</h2>
 
           <p class="texto-secundario">
             Acompanhe aqui o preparo dos seus pedidos.
@@ -92,23 +131,23 @@ const dadosStatus = status => {
             label="Atualizar"
             icon="pi pi-refresh"
             severity="secondary"
-            :loading="carregandoPedidosComanda"
-            @click="carregarPedidosComanda()"
+            :loading="carregandoPedidos"
+            @click="carregarPedidos()"
         />
       </div>
 
       <div
-          v-if="carregandoPedidosComanda"
+          v-if="carregandoPedidos"
           class="pagina-centralizada"
       >
         <ProgressSpinner />
       </div>
 
       <p
-          v-else-if="pedidosComanda.length === 0"
+          v-else-if="pedidosExibidos.length === 0"
           class="texto-secundario"
       >
-        Nenhum pedido foi enviado nesta comanda.
+        Nenhum pedido foi encontrado.
       </p>
 
       <div
@@ -116,7 +155,7 @@ const dadosStatus = status => {
           class="grade-pedidos"
       >
         <Card
-            v-for="pedido in pedidosComanda"
+            v-for="pedido in pedidosExibidos"
             :key="pedido.id"
             class="pedido-cliente-card"
         >
@@ -130,7 +169,10 @@ const dadosStatus = status => {
 
           <template #content>
             <div class="detalhes-pedido">
-              <ul class="lista-itens-pedido">
+              <ul
+                  v-if="pedido.itens?.length"
+                  class="lista-itens-pedido"
+              >
                 <li
                     v-for="item in pedido.itens"
                     :key="item.id"
@@ -144,11 +186,19 @@ const dadosStatus = status => {
                 </li>
               </ul>
 
+              <p
+                  v-else
+                  class="texto-secundario"
+              >
+                Nenhum item encontrado neste pedido.
+              </p>
+
               <div
                   v-if="pedido.observacao"
                   class="observacao-pedido"
               >
                 <strong>Observação:</strong>
+
                 <p>{{ pedido.observacao }}</p>
               </div>
 
