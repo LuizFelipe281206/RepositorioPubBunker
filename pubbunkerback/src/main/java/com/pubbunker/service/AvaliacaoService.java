@@ -79,9 +79,10 @@ public class AvaliacaoService {
         avaliacao.setUsuario(usuario);
         avaliacao.setNota(dto.getNota());
         avaliacao.setComentario(
-                dto.getComentario().trim()
+                dto.getComentario() == null
+                        ? ""
+                        : dto.getComentario().trim()
         );
-
         return avaliacaoRepository.save(avaliacao);
     }
 
@@ -93,7 +94,9 @@ public class AvaliacaoService {
 
         avaliacao.setNota(dto.getNota());
         avaliacao.setComentario(
-                dto.getComentario().trim()
+                dto.getComentario() == null
+                        ? ""
+                        : dto.getComentario().trim()
         );
 
         return avaliacaoRepository.save(avaliacao);

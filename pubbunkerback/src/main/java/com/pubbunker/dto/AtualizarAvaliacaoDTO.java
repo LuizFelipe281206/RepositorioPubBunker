@@ -2,7 +2,7 @@ package com.pubbunker.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -23,7 +23,6 @@ public class AtualizarAvaliacaoDTO {
     )
     private Integer nota;
 
-    @NotBlank(message = "O comentário deve ser informado.")
     @Size(
             max = 255,
             message = "O comentário deve possuir no máximo 255 caracteres."

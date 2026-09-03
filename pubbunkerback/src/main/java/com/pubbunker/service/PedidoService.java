@@ -20,11 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.pubbunker.enums.Role;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.pubbunker.model.Adicional;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +37,7 @@ public class PedidoService {
     private final ProdutoRepository produtoRepository;
     private final UsuarioRepository usuarioRepository;
     private final ComandaService comandaService;
+    private final AdicionalService adicionalService;
 
     @Transactional(readOnly = true)
     public List<Pedido> listarTodos() {
@@ -108,7 +111,7 @@ public class PedidoService {
 
         if (!possuiComanda && !possuiCliente) {
             throw new RegraNegocioException(
-                    "A comanda deve ser informada."
+                    "A comanda ou o cliente deve ser informado."
             );
         }
 
@@ -126,6 +129,7 @@ public class PedidoService {
                     "O pedido deve possuir pelo menos um item."
             );
         }
+
         Comanda comanda = null;
         Usuario cliente = null;
 
@@ -146,24 +150,22 @@ public class PedidoService {
                                     )
                     );
         }
-        Map<Long, Integer> quantidadesPorProduto =
-                dto.getItens()
-                        .stream()
-                        .collect(
-                                Collectors.toMap(
-                                        ItemPedidoRequestDTO::getProdutoId,
-                                        ItemPedidoRequestDTO::getQuantidade,
-                                        Integer::sum,
-                                        LinkedHashMap::new
-                                )
-                        );
+
+        Set<Long> produtosIds =
+                new LinkedHashSet<>();
+
+        for (ItemPedidoRequestDTO item : dto.getItens()) {
+            produtosIds.add(
+                    item.getProdutoId()
+            );
+        }
 
         List<Produto> produtos = produtoRepository
                 .findAllByIdInAndDeletedAtIsNullAndAtivoTrue(
-                        quantidadesPorProduto.keySet()
+                        produtosIds
                 );
 
-        if (produtos.size() != quantidadesPorProduto.size()) {
+        if (produtos.size() != produtosIds.size()) {
             throw new RecursoNaoEncontradoException(
                     "Um ou mais produtos não foram encontrados ou estão inativos."
             );
@@ -199,17 +201,63 @@ public class PedidoService {
         BigDecimal valorTotal = BigDecimal.ZERO;
 
         for (
-                Map.Entry<Long, Integer> entrada :
-                quantidadesPorProduto.entrySet()
+                ItemPedidoRequestDTO itemRecebido :
+                dto.getItens()
         ) {
-            Produto produto = produtosPorId.get(entrada.getKey());
-            Integer quantidade = entrada.getValue();
-
-            BigDecimal precoUnitario = produto.getPreco();
-
-            BigDecimal subtotal = precoUnitario.multiply(
-                    BigDecimal.valueOf(quantidade)
+            Produto produto = produtosPorId.get(
+                    itemRecebido.getProdutoId()
             );
+
+            Integer quantidade =
+                    itemRecebido.getQuantidade();
+
+            List<Adicional> adicionais =
+                    adicionalService.buscarAtivosPorIds(
+                            itemRecebido.getAdicionaisIds()
+                    );
+
+            Set<Long> adicionaisPermitidos =
+                    produto
+                            .getAdicionaisDisponiveis()
+                            .stream()
+                            .map(Adicional::getId)
+                            .collect(Collectors.toSet());
+
+            for (Adicional adicional : adicionais) {
+                if (
+                        !adicionaisPermitidos.contains(
+                                adicional.getId()
+                        )
+                ) {
+                    throw new RegraNegocioException(
+                            "O adicional "
+                                    + adicional.getNome()
+                                    + " não está disponível para o produto "
+                                    + produto.getNome()
+                                    + "."
+                    );
+                }
+            }
+
+            BigDecimal valorAdicionais =
+                    adicionais.stream()
+                            .map(Adicional::getPreco)
+                            .reduce(
+                                    BigDecimal.ZERO,
+                                    BigDecimal::add
+                            );
+
+            BigDecimal precoUnitario =
+                    produto.getPreco().add(
+                            valorAdicionais
+                    );
+
+            BigDecimal subtotal =
+                    precoUnitario.multiply(
+                            BigDecimal.valueOf(
+                                    quantidade
+                            )
+                    );
 
             ItemPedido item = new ItemPedido();
 
@@ -217,6 +265,10 @@ public class PedidoService {
             item.setQuantidade(quantidade);
             item.setPrecoUnitario(precoUnitario);
             item.setSubtotal(subtotal);
+
+            item.setAdicionais(
+                    new LinkedHashSet<>(adicionais)
+            );
 
             pedido.adicionarItem(item);
 
