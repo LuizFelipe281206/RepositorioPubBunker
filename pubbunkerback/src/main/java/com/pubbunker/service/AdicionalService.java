@@ -7,7 +7,7 @@ import com.pubbunker.repository.AdicionalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.pubbunker.exception.RegraNegocioException;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -101,11 +101,14 @@ public class AdicionalService {
     public void deletar(Long id) {
         Adicional adicional = buscarPorId(id);
 
-        adicional.setAtivo(false);
-        adicional.setDeletedAt(
-                LocalDateTime.now()
-        );
+        if (Boolean.TRUE.equals(adicional.getAtivo())) {
+            throw new RegraNegocioException(
+                    "Um adicional ativo não pode ser excluído. "
+                            + "Inative-o antes da exclusão."
+            );
+        }
 
+        adicional.setDeletedAt(LocalDateTime.now());
         repository.save(adicional);
     }
 }

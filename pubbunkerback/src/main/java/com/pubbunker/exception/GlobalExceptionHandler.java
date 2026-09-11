@@ -12,6 +12,18 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(AcessoComandaInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> tratarAcessoComanda(
+            AcessoComandaInvalidoException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of(
+                        "status", 401,
+                        "codigo", "ACESSO_COMANDA_INVALIDO",
+                        "mensagem", exception.getMessage()
+                ));
+    }
 
     @ExceptionHandler(RecursoNaoEncontradoException.class)
     public ResponseEntity<Map<String, Object>> tratarRecursoNaoEncontrado(

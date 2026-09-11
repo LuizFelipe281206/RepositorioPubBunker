@@ -12,13 +12,8 @@ import java.util.List;
 public class PedidoResponseDTO {
 
     private final Long id;
-
     private final Long comandaId;
     private final Integer numeroComanda;
-
-    private final Long clienteId;
-    private final String clienteNome;
-
     private final List<ItemPedidoResponseDTO> itens;
     private final StatusPedido status;
     private final BigDecimal valorTotal;
@@ -29,25 +24,11 @@ public class PedidoResponseDTO {
         this.id = pedido.getId();
 
         if (pedido.getComanda() != null) {
-            this.comandaId =
-                    pedido.getComanda().getId();
-
-            this.numeroComanda =
-                    pedido.getComanda().getNumero();
+            this.comandaId = pedido.getComanda().getId();
+            this.numeroComanda = pedido.getComanda().getNumero();
         } else {
             this.comandaId = null;
             this.numeroComanda = null;
-        }
-
-        if (pedido.getCliente() != null) {
-            this.clienteId =
-                    pedido.getCliente().getId();
-
-            this.clienteNome =
-                    pedido.getCliente().getNome();
-        } else {
-            this.clienteId = null;
-            this.clienteNome = null;
         }
 
         this.itens = pedido.getItens()

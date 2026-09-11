@@ -5,10 +5,11 @@ import com.pubbunker.dto.CriarPedidoDTO;
 import com.pubbunker.dto.PedidoResponseDTO;
 import com.pubbunker.service.PedidoService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/pedidos")
@@ -35,31 +36,18 @@ public class PedidoController {
                 .map(PedidoResponseDTO::new)
                 .toList();
     }
-    @GetMapping("/cliente/{clienteId}")
-    public List<PedidoResponseDTO> listarPorCliente(
-            @PathVariable Long clienteId
-    ) {
-        return service.listarPorCliente(clienteId)
-                .stream()
-                .map(PedidoResponseDTO::new)
-                .toList();
-    }
+
     @GetMapping("/{id}")
-    public PedidoResponseDTO buscarPorId(
-            @PathVariable Long id
-    ) {
-        return new PedidoResponseDTO(
-                service.buscarPorId(id)
-        );
+    public PedidoResponseDTO buscarPorId(@PathVariable Long id) {
+        return new PedidoResponseDTO(service.buscarPorId(id));
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public PedidoResponseDTO criarPedido(
             @Valid @RequestBody CriarPedidoDTO dto
     ) {
-        return new PedidoResponseDTO(
-                service.criar(dto)
-        );
+        return new PedidoResponseDTO(service.criar(dto));
     }
 
     @PatchMapping("/status/{id}")
@@ -73,9 +61,8 @@ public class PedidoController {
     }
 
     @DeleteMapping("/{id}")
-    public void deletarPedido(
-            @PathVariable Long id
-    ) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletarPedido(@PathVariable Long id) {
         service.deletar(id);
     }
 }

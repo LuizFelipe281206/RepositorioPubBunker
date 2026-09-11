@@ -9,14 +9,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public interface PedidoRepository
-        extends JpaRepository<Pedido, Long> {
+public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
-    List<Pedido>
-    findByDeletedAtIsNullOrderByDataPedidoAsc();
+    List<Pedido> findByDeletedAtIsNullOrderByDataPedidoAsc();
 
-    Optional<Pedido>
-    findByIdAndDeletedAtIsNull(Long id);
+    Optional<Pedido> findByIdAndDeletedAtIsNull(Long id);
 
     List<Pedido>
     findByComanda_IdAndDataPedidoGreaterThanEqualAndDeletedAtIsNullOrderByDataPedidoAsc(
@@ -24,14 +21,8 @@ public interface PedidoRepository
             LocalDateTime dataAbertura
     );
 
-    boolean
-    existsByComanda_IdAndStatusInAndDeletedAtIsNull(
+    boolean existsByComanda_IdAndStatusInAndDeletedAtIsNull(
             Long comandaId,
             Collection<StatusPedido> status
-    );
-
-    List<Pedido>
-    findByCliente_IdAndDeletedAtIsNullOrderByDataPedidoDesc(
-            Long clienteId
     );
 }

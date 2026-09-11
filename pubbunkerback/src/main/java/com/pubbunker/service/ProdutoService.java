@@ -8,7 +8,7 @@ import com.pubbunker.repository.ProdutoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.pubbunker.exception.RegraNegocioException;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -107,11 +107,14 @@ public class ProdutoService {
     public void deletar(Long id) {
         Produto produto = buscarPorId(id);
 
-        produto.setAtivo(false);
-        produto.setDeletedAt(
-                LocalDateTime.now()
-        );
+        if (Boolean.TRUE.equals(produto.getAtivo())) {
+            throw new RegraNegocioException(
+                    "Um produto ativo não pode ser excluído. "
+                            + "Inative-o antes da exclusão."
+            );
+        }
 
+        produto.setDeletedAt(LocalDateTime.now());
         repository.save(produto);
     }
 }
