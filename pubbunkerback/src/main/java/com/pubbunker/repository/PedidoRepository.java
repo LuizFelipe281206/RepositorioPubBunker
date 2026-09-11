@@ -16,7 +16,7 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     Optional<Pedido> findByIdAndDeletedAtIsNull(Long id);
 
     List<Pedido>
-    findByComanda_IdAndDataPedidoGreaterThanEqualAndDeletedAtIsNullOrderByDataPedidoAsc(
+    findByComanda_IdAndDataPedidoGreaterThanEqualOrderByDataPedidoAsc(
             Long comandaId,
             LocalDateTime dataAbertura
     );

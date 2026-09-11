@@ -16,7 +16,7 @@ public class ItemPedidoResponseDTO {
     private final BigDecimal precoUnitario;
     private final BigDecimal subtotal;
 
-    private final List<AdicionalResponseDTO>
+    private final List<AdicionalPedidoResponseDTO>
             adicionais;
 
     public ItemPedidoResponseDTO(
@@ -33,10 +33,10 @@ public class ItemPedidoResponseDTO {
 
         this.subtotal = item.getSubtotal();
 
-        this.adicionais =
-                item.getAdicionais()
-                        .stream()
-                        .map(AdicionalResponseDTO::new)
-                        .toList();
+        this.adicionais = item.getAdicionaisSnapshot().isEmpty()
+                ? item.getAdicionais().stream()
+                .map(AdicionalPedidoResponseDTO::new).toList()
+                : item.getAdicionaisSnapshot().stream()
+                .map(AdicionalPedidoResponseDTO::new).toList();
     }
 }

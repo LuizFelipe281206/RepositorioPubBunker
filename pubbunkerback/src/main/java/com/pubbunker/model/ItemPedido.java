@@ -51,6 +51,15 @@ public class ItemPedido {
     private Set<Adicional> adicionais =
             new LinkedHashSet<>();
 
+    @ElementCollection
+    @CollectionTable(
+            name = "item_pedido_adicionais_snapshot",
+            joinColumns = @JoinColumn(name = "item_pedido_id")
+    )
+    @OrderColumn(name = "posicao")
+    private java.util.List<AdicionalPedidoSnapshot> adicionaisSnapshot =
+            new java.util.ArrayList<>();
+
     @Column(nullable = false)
     private Integer quantidade;
 

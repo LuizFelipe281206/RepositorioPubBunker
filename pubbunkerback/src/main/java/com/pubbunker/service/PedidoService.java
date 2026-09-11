@@ -7,6 +7,7 @@ import com.pubbunker.enums.StatusPedido;
 import com.pubbunker.exception.RecursoNaoEncontradoException;
 import com.pubbunker.exception.RegraNegocioException;
 import com.pubbunker.model.Adicional;
+import com.pubbunker.model.AdicionalPedidoSnapshot;
 import com.pubbunker.model.Comanda;
 import com.pubbunker.model.ItemPedido;
 import com.pubbunker.model.Pedido;
@@ -47,7 +48,7 @@ public class PedidoService {
                 comandaService.buscarAtivaPorCodigo(codigoAcesso);
 
         return pedidoRepository
-                .findByComanda_IdAndDataPedidoGreaterThanEqualAndDeletedAtIsNullOrderByDataPedidoAsc(
+                .findByComanda_IdAndDataPedidoGreaterThanEqualOrderByDataPedidoAsc(
                         comanda.getId(),
                         comanda.getDataAbertura()
                 );
@@ -163,6 +164,9 @@ public class PedidoService {
             item.setPrecoUnitario(precoUnitario);
             item.setSubtotal(subtotal);
             item.setAdicionais(new LinkedHashSet<>(adicionais));
+            item.setAdicionaisSnapshot(adicionais.stream()
+                    .map(AdicionalPedidoSnapshot::new)
+                    .collect(Collectors.toCollection(java.util.ArrayList::new)));
 
             pedido.adicionarItem(item);
             valorTotal = valorTotal.add(subtotal);
