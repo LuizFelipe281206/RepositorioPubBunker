@@ -32,6 +32,7 @@ const produtosExibidos = computed(() => {
 
   return props.produtos.filter(
       produto =>
+          produto.ativo &&
           produto.categoria === categoriaSelecionada.value
   )
 })
@@ -183,7 +184,11 @@ const formatarPreco = valor =>
             <strong class="produto-preco">
               {{ formatarPreco(produto.preco) }}
             </strong>
-
+            <Tag
+                v-if="modoAdmin"
+                :value="produto.ativo ? 'Ativo' : 'Inativo'"
+                :severity="produto.ativo ? 'success' : 'secondary'"
+            />
             <Tag
                 v-if="produto.categoria"
                 :value="produto.categoria"
@@ -208,6 +213,12 @@ const formatarPreco = valor =>
                 label="Excluir"
                 icon="pi pi-trash"
                 severity="danger"
+                :disabled="produto.ativo"
+                :title="
+                  produto.ativo
+                ? 'Inative o produto antes de excluí-lo.'
+                : 'Excluir produto'
+"
                 @click="emit('excluir', produto.id)"
             />
           </template>

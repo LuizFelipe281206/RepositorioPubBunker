@@ -35,15 +35,16 @@ const limparFormulario = () => {
 }
 
 const salvar = async () => {
-  if (
-      !form.nota ||
-      !form.comentario.trim()
-  ) {
-    abrirPopup(
-        'Campos obrigatórios',
-        'Informe uma nota e um comentário.',
-        'erro'
-    )
+  if (!form.nota) {
+    if (!form.nota) {
+  abrirPopup(
+      'Campo obrigatório',
+      'Informe uma nota.',
+      'erro'
+  )
+
+  return
+}
 
     return
   }
@@ -82,8 +83,7 @@ const editar = (avaliacao) => {
   avaliacaoEditandoId.value = avaliacao.id
 
   form.nota = avaliacao.nota
-  form.comentario = avaliacao.comentario
-
+form.comentario = avaliacao.comentario || ''
   window.scrollTo({
     top: 0,
     behavior: 'smooth'
@@ -141,7 +141,7 @@ const formatarData = valor =>
 
           <div class="campo campo-largo">
             <label for="comentario">
-              Comentário
+              Comentário (opcional)
             </label>
 
             <Textarea
@@ -223,7 +223,7 @@ const formatarData = valor =>
             />
 
             <p class="comentario-avaliacao">
-              {{ avaliacao.comentario }}
+              {{ avaliacao.comentario || 'Sem comentário.' }}
             </p>
           </template>
 

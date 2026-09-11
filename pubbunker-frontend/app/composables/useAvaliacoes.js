@@ -39,7 +39,7 @@ export const useAvaliacoes = () => {
         await $api.post('/avaliacoes', {
             usuarioId: usuarioId.value,
             nota: Number(dados.nota),
-            comentario: dados.comentario
+            comentario: dados.comentario.trim() || null
         })
 
         await carregarAvaliacoes()
@@ -53,7 +53,7 @@ export const useAvaliacoes = () => {
             `/avaliacoes/${id}`,
             {
                 nota: Number(dados.nota),
-                comentario: dados.comentario
+                comentario: dados.comentario.trim() || null
             }
         )
 

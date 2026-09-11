@@ -10,56 +10,28 @@ const {
 
 const {
   pedidosComanda,
-  carregandoPedidosComanda,
-  carregarPedidosComanda
+  carregandoPedidosComanda
 } = usePedidosComanda()
-
-const {
-  pedidosCliente,
-  carregandoPedidosCliente,
-  carregarPedidosCliente
-} = usePedidosCliente()
 
 let intervaloAtualizacao = null
 
-const pedidosExibidos = computed(() => {
-  return comandaAtiva.value
-      ? pedidosComanda.value
-      : pedidosCliente.value
-})
-
-const carregandoPedidos = computed(() => {
-  return comandaAtiva.value
-      ? carregandoPedidosComanda.value
-      : carregandoPedidosCliente.value
-})
-
 const tituloPedidos = computed(() => {
   if (comandaAtiva.value) {
-    return `Pedidos da comanda ${
-        comandaAtual.value?.numero || ''
-    }`
+    return `Pedidos da comanda ${comandaAtual.value?.numero || ''}`
   }
 
-  return 'Meus pedidos'
+  return 'Pedidos da comanda'
 })
 
-const carregarPedidos = async (
-    silencioso = false
-) => {
-  if (comandaAtiva.value) {
-    await carregarPedidosComanda(silencioso)
-    return
-  }
-
-  await carregarPedidosCliente(silencioso)
+const carregarPedidos = async (silencioso = false) => {
+  await carregarPedidosComanda(silencioso)
 }
 
 onMounted(async () => {
-  await carregarPedidos()
+  await carregandoPedidosComanda()
 
   intervaloAtualizacao = setInterval(
-      () => carregarPedidos(true),
+      () => carregandoPedidosComanda(true),
       10000
   )
 })
@@ -76,13 +48,8 @@ const formatarPreco = valor =>
       currency: 'BRL'
     })
 
-const formatarData = valor => {
-  if (!valor) {
-    return ''
-  }
-
-  return new Date(valor).toLocaleString('pt-BR')
-}
+const formatarData = valor =>
+    valor ? new Date(valor).toLocaleString('pt-BR') : ''
 
 const dadosStatus = status => {
   const configuracoes = {
@@ -97,10 +64,6 @@ const dadosStatus = status => {
     CONCLUIDO: {
       texto: 'Concluído',
       severity: 'success'
-    },
-    CANCELADO: {
-      texto: 'Cancelado',
-      severity: 'danger'
     }
   }
 
@@ -132,7 +95,8 @@ const dadosStatus = status => {
             icon="pi pi-refresh"
             severity="secondary"
             :loading="carregandoPedidos"
-            @click="carregarPedidos()"
+            :disabled="!comandaAtiva"
+            @click="ComandacarregandoPedidosComanda()"
         />
       </div>
 
@@ -142,9 +106,15 @@ const dadosStatus = status => {
       >
         <ProgressSpinner />
       </div>
-
+<p
+    v-else-if="!comandaAtiva"
+    class="texto-secundario"
+>
+  Acesse o sistema pelo QR Code de uma comanda em uso
+  para consultar os pedidos.
+</p>
       <p
-          v-else-if="pedidosExibidos.length === 0"
+          v-else-if="pedidosComanda.length === 0"
           class="texto-secundario"
       >
         Nenhum pedido foi encontrado.
@@ -155,7 +125,7 @@ const dadosStatus = status => {
           class="grade-pedidos"
       >
         <Card
-            v-for="pedido in pedidosExibidos"
+            v-for="pedido in pedidosComanda"
             :key="pedido.id"
             class="pedido-cliente-card"
         >

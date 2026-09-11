@@ -18,9 +18,7 @@ export const useProdutos = () => {
         try {
             const { data } = await $api.get('/produtos')
 
-            produtos.value = data.filter(
-                produto => produto.ativo
-            )
+            produtos.value = Array.isArray(data) ? data : []
         } catch {
             abrirPopup(
                 'Erro',

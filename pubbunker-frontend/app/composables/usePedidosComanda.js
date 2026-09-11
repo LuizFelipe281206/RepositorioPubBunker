@@ -1,8 +1,5 @@
 export const usePedidosComanda = () => {
-    const pedidosComanda = useState(
-        'pedidos-comanda',
-        () => []
-    )
+    const pedidosComanda = useState('pedidos-comanda', () => [])
 
     const carregandoPedidosComanda = useState(
         'carregando-pedidos-comanda',
@@ -11,11 +8,9 @@ export const usePedidosComanda = () => {
 
     const { $api } = useNuxtApp()
     const { abrirPopup } = usePopup()
-    const { codigoComanda } = useComanda()
+    const { codigoComanda, tratarAcessoInvalido } = useComanda()
 
-    const carregarPedidosComanda = async (
-        silencioso = false
-    ) => {
+    const carregarPedidosComanda = async (silencioso = false) => {
         if (!codigoComanda.value) {
             pedidosComanda.value = []
             return
@@ -25,17 +20,21 @@ export const usePedidosComanda = () => {
             carregandoPedidosComanda.value = true
         }
 
+        const codigoSolicitado = codigoComanda.value
+
         try {
             const { data } = await $api.get(
-                `/pedidos/comanda/${
-                    encodeURIComponent(
-                        codigoComanda.value
-                    )
-                }`
+                `/pedidos/comanda/${encodeURIComponent(codigoSolicitado)}`
             )
 
-            pedidosComanda.value = data
-        } catch {
+            if (codigoSolicitado === codigoComanda.value) {
+                pedidosComanda.value = data
+            }
+        } catch (erro) {
+            if (codigoSolicitado !== codigoComanda.value) return
+
+            if (tratarAcessoInvalido(erro, codigoSolicitado)) return
+
             if (!silencioso) {
                 abrirPopup(
                     'Erro',

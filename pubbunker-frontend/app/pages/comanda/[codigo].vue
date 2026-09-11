@@ -4,13 +4,17 @@ definePageMeta({
 })
 
 const route = useRoute()
-const { acessarComanda } = useComanda()
+const { acessarComanda, erroComanda } = useComanda()
 
 const carregando = ref(true)
 const erroAcesso = ref(false)
 const mensagemErro = ref('')
+const tituloErro = ref('Comanda indisponível')
 
-onMounted(async () => {
+const acessar = async () => {
+  carregando.value = true
+  erroAcesso.value = false
+
   try {
     const codigo = Array.isArray(route.params.codigo)
         ? route.params.codigo[0]
@@ -26,10 +30,12 @@ onMounted(async () => {
       window.location.replace('/cardapio')
     } else {
       erroAcesso.value = true
-      mensagemErro.value = 'Esta comanda não está disponível para uso.'
+      tituloErro.value = erroComanda.value.titulo
+      mensagemErro.value = erroComanda.value.mensagem
     }
   } catch (erro) {
     erroAcesso.value = true
+    tituloErro.value = 'Não foi possível acessar a comanda'
     mensagemErro.value =
         erro?.data?.mensagem ||
         erro?.message ||
@@ -37,7 +43,9 @@ onMounted(async () => {
   } finally {
     carregando.value = false
   }
-})
+}
+
+onMounted(acessar)
 </script>
 
 <template>
@@ -49,10 +57,14 @@ onMounted(async () => {
         </div>
 
         <div v-else-if="erroAcesso" class="erro-acesso">
-          <h2>Comanda indisponível</h2>
+          <h2>{{ tituloErro }}</h2>
 
           <p>{{ mensagemErro }}</p>
-
+          <Button
+    label="Tentar novamente"
+    icon="pi pi-refresh"
+    @click="acessar"
+/>
           <Button
               label="Voltar"
               icon="pi pi-arrow-left"

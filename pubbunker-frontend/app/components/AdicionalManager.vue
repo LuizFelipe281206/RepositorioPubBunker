@@ -101,6 +101,14 @@ const editar = (adicional) => {
 }
 
 const solicitarExclusao = (adicional) => {
+  if (adicional.ativo) {
+  abrirPopup(
+      'Ação não permitida',
+      'Inative o adicional antes de arquivá-lo.',
+      'erro'
+  )
+  return
+}
   adicionalParaExcluir.value = adicional
   confirmacaoVisivel.value = true
 }
@@ -294,6 +302,12 @@ const formatarPreco = valor =>
                   icon="pi pi-trash"
                   severity="danger"
                   outlined
+                  :disabled="adicional.ativo"
+                  :title="
+                    adicional.ativo
+                        ? 'Inative o adicional antes de arquivá-lo.'
+                        : 'Arquivar adicional'
+                  "
                   @click="
                     solicitarExclusao(adicional)
                   "

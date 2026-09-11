@@ -67,23 +67,10 @@ const formatarData = valor => {
         </template>
 
         <template #subtitle>
-          <span v-if="pedido.numeroComanda">
-            Pedido realizado pela comanda
-          </span>
-
-          <span v-else>
-            Cliente:
-            {{ pedido.clienteNome || 'Não identificado' }}
-          </span>
-
-          <br>
-
-          Status: {{ pedido.status }}
-
-          <span v-if="pedido.dataPedido">
-            — {{ formatarData(pedido.dataPedido) }}
-          </span>
-        </template>
+  Pedido realizado pela comanda
+  <br>
+  {{ formatarData(pedido.dataPedido) }}
+</template>
 
         <template #content>
           <div class="detalhes-pedido">
@@ -148,10 +135,7 @@ const formatarData = valor => {
             <Button
                 label="Em preparo"
                 severity="warn"
-                :disabled="
-                  pedido.status === 'CONCLUIDO' ||
-                  pedido.status === 'CANCELADO'
-                "
+                :disabled="pedido.status !== 'PENDENTE'"
                 @click="
                   atualizarStatus(
                     pedido.id,
@@ -163,10 +147,7 @@ const formatarData = valor => {
             <Button
                 label="Concluir"
                 severity="success"
-                :disabled="
-                  pedido.status === 'CONCLUIDO' ||
-                  pedido.status === 'CANCELADO'
-                "
+                :disabled="pedido.status !== 'EM_PREPARO'"
                 @click="
                   atualizarStatus(
                     pedido.id,

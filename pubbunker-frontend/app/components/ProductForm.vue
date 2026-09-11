@@ -5,7 +5,9 @@ const props = defineProps({
     default: null
   }
 })
-
+const adicionaisAtivos = computed(() =>
+    adicionais.value.filter(adicional => adicional.ativo)
+)
 const emit = defineEmits([
   'salvo',
   'cancelado'
@@ -51,12 +53,9 @@ watch(
                 categoria: produto.categoria,
                 ativo: produto.ativo,
                 adicionaisIds:
-                    produto
-                        .adicionaisDisponiveis
-                        ?.map(
-                            adicional =>
-                                adicional.id
-                        ) || []
+                    produto.adicionaisDisponiveis
+                        ?.filter(adicional => adicional.ativo)
+                        ?.map(adicional => adicional.id) || []
               }
               : formularioVazio()
       )
@@ -225,7 +224,7 @@ const salvar = async () => {
           <MultiSelect
               input-id="adicionais-produto"
               v-model="form.adicionaisIds"
-              :options="adicionais"
+              :options="adicionaisAtivos"
               option-label="nome"
               option-value="id"
               display="chip"

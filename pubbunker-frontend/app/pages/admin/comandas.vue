@@ -1,5 +1,10 @@
 <script setup>
 import QRCode from 'qrcode'
+import { copiarTexto } from '~/utils/clipboard.js'
+import {
+  gerarLinkComanda,
+  enderecoApenasLocal
+} from '~/utils/acessoComanda.js'
 
 definePageMeta({
   roles: ['ADMIN', 'FUNCIONARIO']
@@ -28,16 +33,31 @@ const qrCodeVisivel = ref(false)
 const qrCodeImagem = ref('')
 const comandaSelecionada = ref(null)
 const gerandoQrCode = ref(false)
+const config = useRuntimeConfig()
+
+const copiaManualVisivel = ref(false)
+const linkParaCopiar = ref('')
+
+const baseAcesso = computed(() =>
+    config.public.appBaseUrl ||
+    (import.meta.client ? window.location.origin : '')
+)
+
+const linkApenasLocal = computed(
+    () => enderecoApenasLocal(baseAcesso.value)
+)
 
 const montarLinkComanda = (codigoAcesso) => {
   if (!import.meta.client || !codigoAcesso) {
     return ''
   }
 
-  return `${window.location.origin}/comanda/${codigoAcesso}`
+  return gerarLinkComanda(baseAcesso.value, codigoAcesso)
 }
 
 const mostrarQrCode = async (comanda) => {
+  if (comanda?.status !== 'EM_USO') return
+
   comandaSelecionada.value = comanda
   qrCodeVisivel.value = true
   qrCodeImagem.value = ''
@@ -69,31 +89,6 @@ const mostrarQrCode = async (comanda) => {
     qrCodeVisivel.value = false
   } finally {
     gerandoQrCode.value = false
-  }
-}
-
-const copiarLinkQrCode = async () => {
-  const link = montarLinkComanda(
-      comandaSelecionada.value?.codigoAcesso
-  )
-
-  if (!link) {
-    return
-  }
-
-  try {
-    await navigator.clipboard.writeText(link)
-
-    abrirPopup(
-        'Link copiado',
-        'O link da comanda foi copiado.'
-    )
-  } catch {
-    abrirPopup(
-        'Erro',
-        'Não foi possível copiar o link.',
-        'erro'
-    )
   }
 }
 
@@ -140,23 +135,19 @@ const fechar = async (id) => {
 }
 
 const copiarAcesso = async (comanda) => {
-  const link = montarLinkComanda(
-      comanda.codigoAcesso
-  )
+  if (comanda?.status !== 'EM_USO') return
 
-  try {
-    await navigator.clipboard.writeText(link)
+  const link = montarLinkComanda(comanda?.codigoAcesso)
+  if (!link) return
 
+  if (await copiarTexto(link)) {
     abrirPopup(
         'Link copiado',
         `O acesso da comanda ${comanda.numero} foi copiado.`
     )
-  } catch {
-    abrirPopup(
-        'Erro',
-        'Não foi possível copiar o link da comanda.',
-        'erro'
-    )
+  } else {
+    linkParaCopiar.value = link
+    copiaManualVisivel.value = true
   }
 }
 const solicitarArquivamento = (comanda) => {
@@ -173,6 +164,25 @@ const confirmarArquivamento = async () => {
   if (!comandaParaArquivar.value) {
     return
   }
+
+watch(comandas, (lista) => {
+  const selecionada = comandaSelecionada.value
+  if (!selecionada) return
+
+  const atual = lista.find(item => item.id === selecionada.id)
+
+  if (
+      !atual ||
+      atual.status !== 'EM_USO' ||
+      atual.codigoAcesso !== selecionada.codigoAcesso
+  ) {
+    qrCodeVisivel.value = false
+    copiaManualVisivel.value = false
+    qrCodeImagem.value = ''
+    linkParaCopiar.value = ''
+    comandaSelecionada.value = null
+  }
+}, { deep: true })
 
   const id = comandaParaArquivar.value.id
 
@@ -327,8 +337,11 @@ const severidadeStatus = (status) =>
               </span>
 
               <code class="codigo-comanda">
-                {{ comanda.codigoAcesso }}
-              </code>
+{{
+  comanda.status === 'EM_USO'
+      ? comanda.codigoAcesso
+      : 'Abra a comanda para gerar o acesso'
+}}              </code>
             </div>
 
             <div>
@@ -379,6 +392,7 @@ const severidadeStatus = (status) =>
                 severity="secondary"
                 outlined
                 @click="copiarAcesso(comanda)"
+                :disabled="comanda.status !== 'EM_USO'"
             />
 
             <Button
@@ -440,11 +454,11 @@ const severidadeStatus = (status) =>
           </small>
 
           <Button
-              label="Copiar link"
-              icon="pi pi-copy"
-              class="qr-code-copiar"
-              @click="copiarLinkQrCode"
-          />
+    label="Copiar link"
+    icon="pi pi-copy"
+    class="qr-code-copiar"
+    @click="copiarAcesso(comandaSelecionada)"
+/>
         </template>
       </div>
     </Dialog>
@@ -484,6 +498,25 @@ const severidadeStatus = (status) =>
         @click="confirmarArquivamento"
     />
   </template>
+</Dialog>
+<Dialog
+    v-model:visible="copiaManualVisivel"
+    modal
+    header="Copiar acesso da comanda"
+    :style="{ width: 'min(92vw, 480px)' }"
+>
+  <p>
+    O navegador não permitiu a cópia automática.
+    Selecione o link abaixo e use Copiar.
+  </p>
+
+  <InputText
+      :model-value="linkParaCopiar"
+      aria-label="Link para copiar manualmente"
+      readonly
+      fluid
+      @focus="$event.target.select()"
+  />
 </Dialog>
   </main>
 </template>

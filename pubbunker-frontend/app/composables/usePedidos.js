@@ -66,14 +66,13 @@ export const usePedidos = () => {
             )
 
             return pedidoAtualizado
-        } catch {
-            abrirPopup(
-                'Erro',
-                'Não foi possível atualizar o status.',
-                'erro'
-            )
-
-            return null
+        } catch (erro) {
+    abrirPopup(
+        'Erro',
+        erro.response?.data?.mensagem ||
+            'Não foi possível atualizar o status.',
+        'erro'
+         )
         }
     }
 

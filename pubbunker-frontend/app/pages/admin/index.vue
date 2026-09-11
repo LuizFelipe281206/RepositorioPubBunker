@@ -26,10 +26,8 @@ const excluir = async (id) => {
   } catch (error) {
     abrirPopup(
         'Erro',
-        `Não foi possível excluir o produto. Status: ${
-            error.response?.status ||
-            'desconhecido'
-        }`,
+        error.response?.data?.mensagem ||
+            'Não foi possível excluir o produto.',
         'erro'
     )
   }

@@ -1,85 +1,50 @@
 export const useCarrinho = () => {
-    const carrinho = useState(
-        'carrinho',
-        () => []
-    )
-
-    const observacao = useState(
-        'observacao-pedido',
-        () => ''
-    )
+    const carrinho = useState('carrinho', () => [])
+    const observacao = useState('observacao-pedido', () => '')
 
     const { $api } = useNuxtApp()
     const { abrirPopup } = usePopup()
 
-    const { usuarioId } = useAuth()
-    const { codigoComanda } = useComanda()
+    const { codigoComanda, tratarAcessoInvalido } = useComanda()
+    const { pedidosComanda } = usePedidosComanda()
 
-    const { pedidosComanda } =
-        usePedidosComanda()
-
-    const { pedidosCliente } =
-        usePedidosCliente()
-
-    const adicionar = (
-        produto,
-        quantidade = 1,
-        adicionais = []
-    ) => {
+    const adicionar = (produto, quantidade = 1, adicionais = []) => {
         const quantidadeSelecionada = Math.max(
             1,
             Number(quantidade) || 1
         )
 
         const adicionaisUnicos = (
-            Array.isArray(adicionais)
-                ? adicionais
-                : []
+            Array.isArray(adicionais) ? adicionais : []
         ).filter(
             (adicional, indice, lista) =>
-                lista.findIndex(
-                    item => item.id === adicional.id
-                ) === indice
+                lista.findIndex(item => item.id === adicional.id) === indice
         )
 
         const adicionaisIds = adicionaisUnicos
-                .map(adicional => adicional.id)
-                .sort((a, b) => a - b)
+            .map(adicional => adicional.id)
+            .sort((a, b) => a - b)
 
         const chaveConfiguracao =
             `${produto.id}:${adicionaisIds.join('-')}`
 
-        const produtoExistente =
-            carrinho.value.find(
-                item =>
-                    item.chaveConfiguracao ===
-                    chaveConfiguracao
-            )
+        const produtoExistente = carrinho.value.find(
+            item => item.chaveConfiguracao === chaveConfiguracao
+        )
 
         if (produtoExistente) {
-            produtoExistente.quantidade +=
-                quantidadeSelecionada
+            produtoExistente.quantidade += quantidadeSelecionada
         } else {
-            const valorAdicionais =
-                adicionaisUnicos.reduce(
-                    (soma, adicional) =>
-                        soma +
-                        Number(adicional.preco),
-                    0
-                )
+            const valorAdicionais = adicionaisUnicos.reduce(
+                (soma, adicional) => soma + Number(adicional.preco),
+                0
+            )
 
             carrinho.value.push({
                 ...produto,
-                quantidade:
-                    quantidadeSelecionada,
-
-                adicionaisSelecionados:
-                    adicionaisUnicos,
-
-                precoUnitario:
-                    Number(produto.preco) +
-                    valorAdicionais,
-
+                quantidade: quantidadeSelecionada,
+                adicionaisSelecionados: adicionaisUnicos,
+                precoUnitario: Number(produto.preco) + valorAdicionais,
                 chaveConfiguracao
             })
         }
@@ -106,90 +71,41 @@ export const useCarrinho = () => {
                 'Adicione ao menos um produto.',
                 'erro'
             )
-
             return
         }
 
-        if (
-            !codigoComanda.value &&
-            !usuarioId.value
-        ) {
+        if (!codigoComanda.value) {
             abrirPopup(
-                'Sessão inválida',
-                'Acesse novamente pelo QR Code da comanda.',
+                'Comanda obrigatória',
+                'Acesse o cardápio pelo QR Code de uma comanda em uso.',
                 'erro'
             )
-
             return
         }
 
-        const identificacao = codigoComanda.value
-            ? {
-                codigoComanda:
-                    codigoComanda.value
-            }
-            : {
-                clienteId: usuarioId.value
-            }
+        const codigoSolicitado = codigoComanda.value
 
         try {
-            const { data: pedidoCriado } =
-                await $api.post(
-                    '/pedidos',
-                    {
-                        ...identificacao,
+            const { data: pedidoCriado } = await $api.post('/pedidos', {
+                codigoComanda: codigoSolicitado,
+                observacao: observacao.value.trim() || null,
+                itens: carrinho.value.map(item => ({
+                    produtoId: item.id,
+                    quantidade: item.quantidade,
+                    adicionaisIds: (
+                        item.adicionaisSelecionados || []
+                    ).map(adicional => adicional.id)
+                }))
+            })
 
-                        observacao:
-                            observacao.value.trim() ||
-                            null,
+            if (codigoSolicitado !== codigoComanda.value) return null
 
-                        itens: carrinho.value.map(
-                            item => ({
-                                produtoId: item.id,
+            const pedidoJaExiste = pedidosComanda.value.some(
+                pedido => pedido.id === pedidoCriado.id
+            )
 
-                                quantidade:
-                                    item.quantidade,
-
-                                adicionaisIds:
-                                    (
-                                        item
-                                            .adicionaisSelecionados ||
-                                        []
-                                    ).map(
-                                        adicional =>
-                                            adicional.id
-                                    )
-                            })
-                        )
-                    }
-                )
-
-            if (codigoComanda.value) {
-                const pedidoJaExiste =
-                    pedidosComanda.value.some(
-                        pedido =>
-                            pedido.id ===
-                            pedidoCriado.id
-                    )
-
-                if (!pedidoJaExiste) {
-                    pedidosComanda.value.push(
-                        pedidoCriado
-                    )
-                }
-            } else {
-                const pedidoJaExiste =
-                    pedidosCliente.value.some(
-                        pedido =>
-                            pedido.id ===
-                            pedidoCriado.id
-                    )
-
-                if (!pedidoJaExiste) {
-                    pedidosCliente.value.unshift(
-                        pedidoCriado
-                    )
-                }
+            if (!pedidoJaExiste) {
+                pedidosComanda.value.push(pedidoCriado)
             }
 
             carrinho.value = []
@@ -202,10 +118,14 @@ export const useCarrinho = () => {
 
             return pedidoCriado
         } catch (erro) {
+            if (codigoSolicitado !== codigoComanda.value) return null
+
+            if (tratarAcessoInvalido(erro, codigoSolicitado)) return null
+
             abrirPopup(
                 'Erro',
                 erro.response?.data?.mensagem ||
-                'Não foi possível finalizar o pedido.',
+                    'Não foi possível finalizar o pedido.',
                 'erro'
             )
 
