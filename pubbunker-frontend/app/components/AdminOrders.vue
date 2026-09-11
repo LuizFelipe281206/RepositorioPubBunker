@@ -8,13 +8,26 @@ const {
 } = usePedidos()
 
 let intervaloAtualizacao = null
+let consultaEmAndamento = false
 
-onMounted(async () => {
-  await carregarPedidos()
+const atualizarPedidos = async (silencioso = false) => {
+  if (consultaEmAndamento) return
+
+  consultaEmAndamento = true
+
+  try {
+    await carregarPedidos(silencioso)
+  } finally {
+    consultaEmAndamento = false
+  }
+}
+
+onMounted(() => {
+  atualizarPedidos()
 
   intervaloAtualizacao = setInterval(
-      () => carregarPedidos(true),
-      5000
+    () => atualizarPedidos(true),
+    5000
   )
 })
 
@@ -25,10 +38,10 @@ onBeforeUnmount(() => {
 })
 
 const formatarPreco = valor =>
-    Number(valor).toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    })
+  Number(valor).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  })
 
 const formatarData = valor => {
   if (!valor) {
@@ -44,16 +57,16 @@ const formatarData = valor => {
     <h2>Pedidos recebidos</h2>
 
     <p
-        v-if="pedidos.length === 0"
-        class="texto-secundario"
+      v-if="pedidos.length === 0"
+      class="texto-secundario"
     >
       Nenhum pedido recebido.
     </p>
 
     <div class="grade-pedidos">
       <Card
-          v-for="pedido in pedidos"
-          :key="pedido.id"
+        v-for="pedido in pedidos"
+        :key="pedido.id"
       >
         <template #title>
           <span v-if="pedido.numeroComanda">
@@ -67,56 +80,56 @@ const formatarData = valor => {
         </template>
 
         <template #subtitle>
-  Pedido realizado pela comanda
-  <br>
-  {{ formatarData(pedido.dataPedido) }}
-</template>
+          Pedido realizado pela comanda
+          <br>
+          {{ formatarData(pedido.dataPedido) }}
+        </template>
 
         <template #content>
           <div class="detalhes-pedido">
             <ul
-                v-if="pedido.itens?.length"
-                class="lista-itens-pedido"
+              v-if="pedido.itens?.length"
+              class="lista-itens-pedido"
             >
               <li
-    v-for="item in pedido.itens"
-    :key="item.id"
->
-  <div class="item-pedido-principal">
-    <strong>
-      {{ item.quantidade }}x
-      {{ item.produtoNome }}
-    </strong>
+                v-for="item in pedido.itens"
+                :key="item.id"
+              >
+                <div class="item-pedido-principal">
+                  <strong>
+                    {{ item.quantidade }}x
+                    {{ item.produtoNome }}
+                  </strong>
 
-    <span>
-      {{ formatarPreco(item.precoUnitario) }}
-      cada — subtotal:
-      {{ formatarPreco(item.subtotal) }}
-    </span>
-  </div>
+                  <span>
+                    {{ formatarPreco(item.precoUnitario) }}
+                    cada — subtotal:
+                    {{ formatarPreco(item.subtotal) }}
+                  </span>
+                </div>
 
-  <ul
-      v-if="item.adicionais?.length"
-      class="lista-adicionais-pedido"
-  >
-    <li
-        v-for="adicional in item.adicionais"
-        :key="adicional.id"
-    >
-      + {{ adicional.nome }}
+                <ul
+                  v-if="item.adicionais?.length"
+                  class="lista-adicionais-pedido"
+                >
+                  <li
+                    v-for="adicional in item.adicionais"
+                    :key="adicional.id"
+                  >
+                    + {{ adicional.nome }}
 
-      <span>
-        {{ formatarPreco(adicional.preco) }}
-        por unidade
-      </span>
-    </li>
-  </ul>
-</li>
+                    <span v-if="adicional.preco != null">
+                      {{ formatarPreco(adicional.preco) }}
+                      por unidade
+                    </span>
+                  </li>
+                </ul>
+              </li>
             </ul>
 
             <div
-                v-if="pedido.observacao"
-                class="observacao-pedido"
+              v-if="pedido.observacao"
+              class="observacao-pedido"
             >
               <strong>Observação:</strong>
 
@@ -133,36 +146,24 @@ const formatarData = valor => {
         <template #footer>
           <div class="acoes-card">
             <Button
-                label="Em preparo"
-                severity="warn"
-                :disabled="pedido.status !== 'PENDENTE'"
-                @click="
-                  atualizarStatus(
-                    pedido.id,
-                    'EM_PREPARO'
-                  )
-                "
+              label="Em preparo"
+              severity="warn"
+              :disabled="pedido.status !== 'PENDENTE'"
+              @click="atualizarStatus(pedido.id, 'EM_PREPARO')"
             />
 
             <Button
-                label="Concluir"
-                severity="success"
-                :disabled="pedido.status !== 'EM_PREPARO'"
-                @click="
-                  atualizarStatus(
-                    pedido.id,
-                    'CONCLUIDO'
-                  )
-                "
+              label="Concluir"
+              severity="success"
+              :disabled="pedido.status !== 'EM_PREPARO'"
+              @click="atualizarStatus(pedido.id, 'CONCLUIDO')"
             />
 
             <Button
-                label="Arquivar"
-                severity="secondary"
-                :disabled="
-                  pedido.status !== 'CONCLUIDO'
-                "
-                @click="fecharPedido(pedido)"
+              label="Arquivar"
+              severity="secondary"
+              :disabled="pedido.status !== 'CONCLUIDO'"
+              @click="fecharPedido(pedido)"
             />
           </div>
         </template>

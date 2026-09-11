@@ -38,12 +38,12 @@ const excluir = async (id) => {
   <main class="container">
     <AppHeader />
 
-    <AdminOrders class="painel" />
     <AdicionalManager />
+
     <ProductForm
-        :produto="produtoEditando"
-        @salvo="produtoEditando = null"
-        @cancelado="produtoEditando = null"
+      :produto="produtoEditando"
+      @salvo="produtoEditando = null"
+      @cancelado="produtoEditando = null"
     />
 
     <section>
