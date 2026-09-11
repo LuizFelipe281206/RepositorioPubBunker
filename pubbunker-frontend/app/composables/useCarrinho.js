@@ -1,5 +1,6 @@
 export const useCarrinho = () => {
     const carrinho = useState('carrinho', () => [])
+    const enviandoPedido = useState('enviando-pedido', () => false)
     const observacao = useState('observacao-pedido', () => '')
 
     const { $api } = useNuxtApp()
@@ -9,6 +10,7 @@ export const useCarrinho = () => {
     const { pedidosComanda } = usePedidosComanda()
 
     const adicionar = (produto, quantidade = 1, adicionais = []) => {
+        if (enviandoPedido.value) return
         const quantidadeSelecionada = Math.max(
             1,
             Number(quantidade) || 1
@@ -56,15 +58,18 @@ export const useCarrinho = () => {
     }
 
     const remover = (index) => {
+        if (enviandoPedido.value) return
         carrinho.value.splice(index, 1)
     }
 
     const cancelar = () => {
+        if (enviandoPedido.value) return
         carrinho.value = []
         observacao.value = ''
     }
 
     const finalizar = async () => {
+        if (enviandoPedido.value) return null
         if (carrinho.value.length === 0) {
             abrirPopup(
                 'Pedido vazio',
@@ -83,6 +88,7 @@ export const useCarrinho = () => {
             return
         }
 
+        enviandoPedido.value = true
         const codigoSolicitado = codigoComanda.value
 
         try {
@@ -130,11 +136,14 @@ export const useCarrinho = () => {
             )
 
             return null
+        } finally {
+            enviandoPedido.value = false
         }
     }
 
     return {
         carrinho,
+        enviandoPedido,
         observacao,
         adicionar,
         remover,

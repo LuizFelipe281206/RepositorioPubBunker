@@ -10,10 +10,12 @@ const {
 
 const {
   pedidosComanda,
-  carregandoPedidosComanda
+  carregandoPedidosComanda,
+  carregarPedidosComanda
 } = usePedidosComanda()
 
 let intervaloAtualizacao = null
+let consultaEmAndamento = false
 
 const tituloPedidos = computed(() => {
   if (comandaAtiva.value) {
@@ -24,14 +26,20 @@ const tituloPedidos = computed(() => {
 })
 
 const carregarPedidos = async (silencioso = false) => {
-  await carregarPedidosComanda(silencioso)
+  if (consultaEmAndamento) return
+  consultaEmAndamento = true
+  try {
+    await carregarPedidosComanda(silencioso)
+  } finally {
+    consultaEmAndamento = false
+  }
 }
 
-onMounted(async () => {
-  await carregandoPedidosComanda()
+onMounted(() => {
+  carregarPedidos()
 
   intervaloAtualizacao = setInterval(
-      () => carregandoPedidosComanda(true),
+      () => carregarPedidos(true),
       10000
   )
 })
@@ -94,14 +102,14 @@ const dadosStatus = status => {
             label="Atualizar"
             icon="pi pi-refresh"
             severity="secondary"
-            :loading="carregandoPedidos"
+            :loading="carregandoPedidosComanda"
             :disabled="!comandaAtiva"
-            @click="ComandacarregandoPedidosComanda()"
+            @click="carregarPedidos()"
         />
       </div>
 
       <div
-          v-if="carregandoPedidos"
+          v-if="carregandoPedidosComanda"
           class="pagina-centralizada"
       >
         <ProgressSpinner />
@@ -168,7 +176,7 @@ const dadosStatus = status => {
     >
       + {{ adicional.nome }}
 
-      <span>
+      <span v-if="adicional.preco != null">
         {{ formatarPreco(adicional.preco) }}
         por unidade
       </span>

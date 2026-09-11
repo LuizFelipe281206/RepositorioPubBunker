@@ -4,6 +4,7 @@ definePageMeta({
 })
 
 const {
+  podeAvaliar,
   avaliacoes,
   carregandoAvaliacoes,
   carregarAvaliacoes,
@@ -35,17 +36,13 @@ const limparFormulario = () => {
 }
 
 const salvar = async () => {
+  if (!podeAvaliar.value) {
+    abrirPopup('Identificação necessária', 'Entre com uma conta de cliente para avaliar.', 'erro')
+    return
+  }
+
   if (!form.nota) {
-    if (!form.nota) {
-  abrirPopup(
-      'Campo obrigatório',
-      'Informe uma nota.',
-      'erro'
-  )
-
-  return
-}
-
+    abrirPopup('Campo obrigatório', 'Informe uma nota.', 'erro')
     return
   }
 
@@ -119,7 +116,13 @@ const formatarData = valor =>
   <main class="container">
     <AppHeader />
 
-    <Card class="painel">
+    <p v-if="!podeAvaliar" class="painel texto-secundario">
+      O acesso pelo QR Code permite fazer pedidos. Para registrar avaliações,
+      é necessário entrar com uma conta de cliente. Você pode continuar
+      usando o cardápio e acompanhando seus pedidos.
+    </p>
+
+    <Card v-if="podeAvaliar" class="painel">
       <template #title>
         {{
           avaliacaoEditandoId
@@ -182,7 +185,7 @@ const formatarData = valor =>
       </template>
     </Card>
 
-    <section>
+    <section v-if="podeAvaliar">
       <h2>Minhas avaliações</h2>
 
       <p

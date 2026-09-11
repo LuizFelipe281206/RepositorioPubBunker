@@ -130,6 +130,13 @@ const paginaAtual = (caminho) =>
     @click="irPara('/admin/comandas')"
 />
     <Button
+        label="Pedidos recebidos"
+        icon="pi pi-shopping-cart"
+        class="botao-navegacao"
+        :class="{ 'botao-navegacao-ativo': paginaAtual('/admin/pedidos') }"
+        @click="irPara('/admin/pedidos')"
+    />
+    <Button
         label="Reservas"
         icon="pi pi-calendar"
         class="botao-navegacao"

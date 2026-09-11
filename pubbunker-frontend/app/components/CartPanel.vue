@@ -1,6 +1,7 @@
 <script setup>
 const {
   carrinho,
+  enviandoPedido,
   observacao,
   remover,
   cancelar,
@@ -105,6 +106,7 @@ const formatarPreco = valor =>
             text
             rounded
             aria-label="Remover item"
+            :disabled="enviandoPedido"
             @click="remover(index)"
         />
       </div>
@@ -120,6 +122,7 @@ const formatarPreco = valor =>
         <Textarea
             id="observacao-pedido"
             v-model="observacao"
+            :disabled="enviandoPedido"
             rows="3"
             maxlength="500"
             auto-resize
@@ -147,14 +150,15 @@ const formatarPreco = valor =>
             label="Finalizar pedido"
             icon="pi pi-check"
             severity="success"
-            :disabled="!carrinho.length"
+            :disabled="!carrinho.length || enviandoPedido"
+            :loading="enviandoPedido"
             @click="finalizar"
         />
 
         <Button
             label="Cancelar"
             severity="secondary"
-            :disabled="!carrinho.length"
+            :disabled="!carrinho.length || enviandoPedido"
             @click="cancelar"
         />
       </div>

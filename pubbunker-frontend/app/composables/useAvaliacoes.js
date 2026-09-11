@@ -10,11 +10,18 @@ export const useAvaliacoes = () => {
     )
 
     const { $api } = useNuxtApp()
-    const { usuarioId } = useAuth()
+    const { usuarioId, role } = useAuth()
+    const podeAvaliar = computed(() => Boolean(usuarioId.value) && role.value === 'CLIENTE')
+    const validarUsuario = () => {
+        if (!podeAvaliar.value) throw new Error('Entre com uma conta de cliente para avaliar.')
+    }
     const { abrirPopup } = usePopup()
 
     const carregarAvaliacoes = async () => {
-        if (!usuarioId.value) return
+        if (!podeAvaliar.value) {
+            avaliacoes.value = []
+            return
+        }
 
         carregandoAvaliacoes.value = true
 
@@ -36,10 +43,11 @@ export const useAvaliacoes = () => {
     }
 
     const criarAvaliacao = async (dados) => {
+        validarUsuario()
         await $api.post('/avaliacoes', {
             usuarioId: usuarioId.value,
             nota: Number(dados.nota),
-            comentario: dados.comentario.trim() || null
+            comentario: (dados.comentario || '').trim() || null
         })
 
         await carregarAvaliacoes()
@@ -49,11 +57,12 @@ export const useAvaliacoes = () => {
         id,
         dados
     ) => {
+        validarUsuario()
         await $api.put(
             `/avaliacoes/${id}`,
             {
                 nota: Number(dados.nota),
-                comentario: dados.comentario.trim() || null
+                comentario: (dados.comentario || '').trim() || null
             }
         )
 
@@ -61,12 +70,14 @@ export const useAvaliacoes = () => {
     }
 
     const excluirAvaliacao = async (id) => {
+        validarUsuario()
         await $api.delete(`/avaliacoes/${id}`)
 
         await carregarAvaliacoes()
     }
 
     return {
+        podeAvaliar,
         avaliacoes,
         carregandoAvaliacoes,
         carregarAvaliacoes,
