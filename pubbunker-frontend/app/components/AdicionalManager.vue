@@ -1,4 +1,16 @@
 <script setup>
+const props = defineProps({
+  mostrarFormulario: {
+    type: Boolean,
+    default: true
+  },
+  mostrarLista: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const edicaoVisivel = ref(false)
 const {
   adicionais,
   carregandoAdicionais,
@@ -70,8 +82,11 @@ const salvar = async () => {
         : 'O adicional foi cadastrado com sucesso.'
     )
 
-    limparFormulario()
-  } catch (erro) {
+if (edicaoVisivel.value) {
+  edicaoVisivel.value = false
+} else {
+  limparFormulario()
+}  } catch (erro) {
     abrirPopup(
       'Erro',
       erro.response?.data?.mensagem ||
@@ -89,6 +104,8 @@ const editar = (adicional) => {
   form.nome = adicional.nome
   form.preco = Number(adicional.preco)
   form.ativo = adicional.ativo
+
+  edicaoVisivel.value = true
 }
 
 const solicitarExclusao = (adicional) => {
@@ -154,82 +171,23 @@ const formatarPreco = valor =>
 <template>
   <Card class="painel">
     <template #title>
-      Gerenciar adicionais
-    </template>
+{{
+  props.mostrarFormulario
+    ? 'Cadastrar adicional'
+    : 'Adicionais cadastrados'
+}}    </template>
 
     <template #content>
-      <form
-        class="form-adicional"
-        @submit.prevent="salvar"
-      >
-        <div class="campo">
-          <label for="nome-adicional">
-            Nome
-            <span class="campo-obrigatorio">*</span>
-          </label>
+      <AdicionalForm
+  v-if="props.mostrarFormulario"
+  v-model:nome="form.nome"
+  v-model:preco="form.preco"
+  v-model:ativo="form.ativo"
+  :salvando="salvando"
+  @salvar="salvar"
+/>
 
-          <InputText
-            id="nome-adicional"
-            v-model="form.nome"
-            maxlength="100"
-            placeholder="Ex.: Bacon extra"
-            fluid
-          />
-        </div>
-
-        <div class="campo">
-          <label for="preco-adicional">
-            Preço
-            <span class="campo-obrigatorio">*</span>
-          </label>
-
-          <InputNumber
-            input-id="preco-adicional"
-            v-model="form.preco"
-            mode="currency"
-            currency="BRL"
-            locale="pt-BR"
-            :min="0"
-            fluid
-          />
-        </div>
-
-        <div class="campo checkbox-campo">
-          <Checkbox
-            v-model="form.ativo"
-            input-id="adicional-ativo"
-            binary
-          />
-
-          <label for="adicional-ativo">
-            Adicional ativo
-          </label>
-        </div>
-
-        <div class="acoes-adicional-form">
-          <Button
-            type="submit"
-            :label="
-              adicionalEditandoId
-                ? 'Atualizar adicional'
-                : 'Cadastrar adicional'
-            "
-            icon="pi pi-save"
-            :loading="salvando"
-          />
-
-          <Button
-            v-if="adicionalEditandoId"
-            type="button"
-            label="Cancelar"
-            severity="secondary"
-            @click="limparFormulario"
-          />
-        </div>
-      </form>
-
-      <div class="lista-adicionais">
-        <h3>Adicionais cadastrados</h3>
+      <div v-if="props.mostrarLista" class="lista-adicionais">
 
         <p
           v-if="carregandoAdicionais"
@@ -299,7 +257,27 @@ const formatarPreco = valor =>
       </div>
     </template>
   </Card>
-
+<Dialog
+  v-model:visible="edicaoVisivel"
+  modal
+  header="Editar adicional"
+  :draggable="false"
+  :closable="!salvando"
+  :close-on-escape="!salvando"
+  :style="{ width: 'min(92vw, 420px)' }"
+  @after-hide="limparFormulario"
+>
+  <AdicionalForm
+    v-if="adicionalEditandoId !== null"
+    v-model:nome="form.nome"
+    v-model:preco="form.preco"
+    v-model:ativo="form.ativo"
+    editando
+    :salvando="salvando"
+    @salvar="salvar"
+    @cancelar="edicaoVisivel = false"
+  />
+</Dialog>
   <Dialog
     v-model:visible="confirmacaoVisivel"
     modal

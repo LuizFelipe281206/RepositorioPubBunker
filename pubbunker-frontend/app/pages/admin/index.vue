@@ -13,6 +13,13 @@ const { abrirPopup } = usePopup()
 
 const produtoEditando = ref(null)
 
+const edicaoProdutoVisivel = ref(false)
+
+const editarProduto = (produto) => {
+  produtoEditando.value = produto
+  edicaoProdutoVisivel.value = true
+}
+
 onMounted(carregarProdutos)
 
 const excluir = async (id) => {
@@ -38,13 +45,28 @@ const excluir = async (id) => {
   <main class="container">
     <AppHeader />
 
-    <AdicionalManager />
-
-    <ProductForm
-      :produto="produtoEditando"
-      @salvo="produtoEditando = null"
-      @cancelado="produtoEditando = null"
-    />
+    <section class="secao-adicionais">
+  <AdicionalManager
+    :mostrar-formulario="false"
+    mostrar-lista
+  />
+</section>
+    <Dialog
+  v-model:visible="edicaoProdutoVisivel"
+  modal
+  header="Editar produto"
+  class="produto-edicao-dialog"
+  :draggable="false"
+  :style="{ width: 'min(92vw, 520px)' }"
+  @after-hide="produtoEditando = null"
+>
+  <ProductForm
+    v-if="produtoEditando"
+    :produto="produtoEditando"
+    @salvo="edicaoProdutoVisivel = false"
+    @cancelado="edicaoProdutoVisivel = false"
+  />
+</Dialog>
 
     <section>
       <h2>Produtos cadastrados</h2>
@@ -52,9 +74,27 @@ const excluir = async (id) => {
       <ProductList
           :produtos="produtos"
           modo-admin
-          @editar="produtoEditando = $event"
+          @editar="editarProduto"
           @excluir="excluir"
       />
     </section>
   </main>
 </template>
+<style scoped>
+.secao-adicionais {
+  margin-top: 32px;
+}
+.produto-edicao-dialog :deep(.painel) {
+  margin-bottom: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.produto-edicao-dialog :deep(.p-card-body) {
+  padding: 0;
+}
+
+.produto-edicao-dialog :deep(.p-card-title) {
+  display: none;
+}
+</style>

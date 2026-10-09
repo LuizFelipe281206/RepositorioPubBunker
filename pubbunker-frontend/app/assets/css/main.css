@@ -1391,3 +1391,8 @@ h4 {
     font-size: 0.82rem;
   }
 }
+.lista-adicionais {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
