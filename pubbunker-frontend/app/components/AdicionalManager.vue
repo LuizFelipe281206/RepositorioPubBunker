@@ -262,7 +262,7 @@ const formatarPreco = valor =>
   modal
   header="Editar adicional"
   :draggable="false"
-  :closable="!salvando"
+  :closable="false"
   :close-on-escape="!salvando"
   :style="{ width: 'min(92vw, 420px)' }"
   @after-hide="limparFormulario"

@@ -7,6 +7,33 @@ const {
   fecharPedido
 } = usePedidos()
 
+const pedidoParaArquivar = ref(null)
+const confirmacaoPedidoVisivel = ref(false)
+const arquivandoPedido = ref(false)
+
+const solicitarArquivamento = (pedido) => {
+  if (arquivandoPedido.value || pedido.status !== 'CONCLUIDO') return
+
+  pedidoParaArquivar.value = pedido
+  confirmacaoPedidoVisivel.value = true
+}
+
+const confirmarArquivamento = async () => {
+  if (!pedidoParaArquivar.value || arquivandoPedido.value) return
+
+  arquivandoPedido.value = true
+
+  try {
+    const arquivado = await fecharPedido(pedidoParaArquivar.value)
+
+    if (arquivado) {
+      confirmacaoPedidoVisivel.value = false
+    }
+  } finally {
+    arquivandoPedido.value = false
+  }
+}
+
 let intervaloAtualizacao = null
 let consultaEmAndamento = false
 
@@ -163,11 +190,48 @@ const formatarData = valor => {
               label="Arquivar"
               severity="secondary"
               :disabled="pedido.status !== 'CONCLUIDO'"
-              @click="fecharPedido(pedido)"
+              @click="solicitarArquivamento(pedido)"
             />
           </div>
         </template>
       </Card>
     </div>
+    <Dialog
+  v-model:visible="confirmacaoPedidoVisivel"
+  modal
+  header="Arquivar pedido"
+  :closable="false"
+  :draggable="false"
+  :close-on-escape="!arquivandoPedido"
+  :style="{ width: 'min(92vw, 420px)' }"
+  @after-hide="pedidoParaArquivar = null"
+>
+  <p v-if="pedidoParaArquivar">
+    Tem certeza que deseja arquivar o pedido
+    <strong>#{{ pedidoParaArquivar.id }}</strong>?
+  </p>
+
+  <p class="texto-secundario">
+    Ele será removido da tela de pedidos recebidos.
+  </p>
+
+  <template #footer>
+    <Button
+      label="Cancelar"
+      severity="secondary"
+      text
+      :disabled="arquivandoPedido"
+      @click="confirmacaoPedidoVisivel = false"
+    />
+
+    <Button
+      label="Arquivar"
+      severity="danger"
+      :loading="arquivandoPedido"
+      :disabled="arquivandoPedido"
+      @click="confirmarArquivamento"
+    />
+  </template>
+</Dialog>
   </section>
 </template>

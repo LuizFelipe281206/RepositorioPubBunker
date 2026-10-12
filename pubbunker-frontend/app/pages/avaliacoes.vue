@@ -87,7 +87,26 @@ form.comentario = avaliacao.comentario || ''
   })
 }
 
-const excluir = async (id) => {
+const avaliacaoParaExcluir = ref(null)
+const confirmacaoAvaliacaoVisivel = ref(false)
+const excluindoAvaliacao = ref(false)
+
+const solicitarExclusao = (id) => {
+  if (excluindoAvaliacao.value) return
+
+  const avaliacao = avaliacoes.value.find(item => item.id === id)
+  if (!avaliacao) return
+
+  avaliacaoParaExcluir.value = avaliacao
+  confirmacaoAvaliacaoVisivel.value = true
+}
+
+const excluir = async () => {
+  if (!avaliacaoParaExcluir.value || excluindoAvaliacao.value) return
+
+  const id = avaliacaoParaExcluir.value.id
+  excluindoAvaliacao.value = true
+
   try {
     await excluirAvaliacao(id)
 
@@ -95,16 +114,20 @@ const excluir = async (id) => {
       limparFormulario()
     }
 
+    confirmacaoAvaliacaoVisivel.value = false
+
     abrirPopup(
-        'Avaliação excluída',
-        'Sua avaliação foi removida com sucesso.'
+      'Avaliação excluída',
+      'Sua avaliação foi removida com sucesso.'
     )
   } catch {
     abrirPopup(
-        'Erro',
-        'Não foi possível excluir a avaliação.',
-        'erro'
+      'Erro',
+      'Não foi possível excluir a avaliação.',
+      'erro'
     )
+  } finally {
+    excluindoAvaliacao.value = false
   }
 }
 
@@ -243,12 +266,45 @@ const formatarData = valor =>
                   label="Excluir"
                   icon="pi pi-trash"
                   severity="danger"
-                  @click="excluir(avaliacao.id)"
+                  @click="solicitarExclusao(avaliacao.id)"
               />
             </div>
           </template>
         </Card>
       </div>
     </section>
+    <Dialog
+  v-model:visible="confirmacaoAvaliacaoVisivel"
+  modal
+  header="Excluir avaliação"
+  :closable="false"
+  :draggable="false"
+  :close-on-escape="!excluindoAvaliacao"
+  :style="{ width: 'min(92vw, 420px)' }"
+  @after-hide="avaliacaoParaExcluir = null"
+>
+  <p v-if="avaliacaoParaExcluir">
+    Tem certeza que deseja excluir sua avaliação
+    <strong>#{{ avaliacaoParaExcluir.id }}</strong>?
+  </p>
+
+  <template #footer>
+    <Button
+      label="Cancelar"
+      severity="secondary"
+      text
+      :disabled="excluindoAvaliacao"
+      @click="confirmacaoAvaliacaoVisivel = false"
+    />
+
+    <Button
+      label="Excluir"
+      severity="danger"
+      :loading="excluindoAvaliacao"
+      :disabled="excluindoAvaliacao"
+      @click="excluir"
+    />
+  </template>
+</Dialog>
   </main>
 </template>

@@ -189,44 +189,74 @@ const alterarStatus = async (
   }
 }
 
-const cancelar = async (reserva) => {
-  try {
-    await cancelarReserva(reserva.id)
+const reservaParaAcao = ref(null)
+const acaoReserva = ref('')
+const confirmacaoReservaVisivel = ref(false)
+const executandoAcaoReserva = ref(false)
 
-    if (
-        reservaEditandoId.value ===
-        reserva.id
-    ) {
+const acaoReservaPermitida = (reserva, acao) => {
+  if (acao === 'CANCELAR') {
+    return ['RESERVADA', 'CONFIRMADA'].includes(reserva.status)
+  }
+
+  return acao === 'ARQUIVAR' &&
+    role.value === 'ADMIN' &&
+    ['CONCLUIDA', 'CANCELADA'].includes(reserva.status)
+}
+
+const solicitarAcaoReserva = (reserva, acao) => {
+  if (executandoAcaoReserva.value) return
+  if (!acaoReservaPermitida(reserva, acao)) return
+
+  reservaParaAcao.value = reserva
+  acaoReserva.value = acao
+  confirmacaoReservaVisivel.value = true
+}
+
+const cancelar = (reserva) =>
+  solicitarAcaoReserva(reserva, 'CANCELAR')
+
+const arquivar = (reserva) =>
+  solicitarAcaoReserva(reserva, 'ARQUIVAR')
+
+const confirmarAcaoReserva = async () => {
+  const reserva = reservaParaAcao.value
+  const acao = acaoReserva.value
+
+  if (!reserva || executandoAcaoReserva.value) return
+  if (!acaoReservaPermitida(reserva, acao)) return
+
+  executandoAcaoReserva.value = true
+
+  try {
+    if (acao === 'CANCELAR') {
+      await cancelarReserva(reserva.id)
+    } else {
+      await excluirReserva(reserva.id)
+    }
+
+    if (reservaEditandoId.value === reserva.id) {
       limparFormulario()
     }
 
+    confirmacaoReservaVisivel.value = false
+
     abrirPopup(
-        'Reserva cancelada',
-        'A reserva foi cancelada e mantida no histórico.'
+      acao === 'CANCELAR' ? 'Reserva cancelada' : 'Reserva arquivada',
+      acao === 'CANCELAR'
+        ? 'A reserva foi cancelada e mantida no histórico.'
+        : 'A reserva foi removida da listagem.'
     )
   } catch {
     abrirPopup(
-        'Erro',
-        'Não foi possível cancelar a reserva.',
-        'erro'
+      'Erro',
+      acao === 'CANCELAR'
+        ? 'Não foi possível cancelar a reserva.'
+        : 'Não foi possível arquivar a reserva.',
+      'erro'
     )
-  }
-}
-
-const arquivar = async (reserva) => {
-  try {
-    await excluirReserva(reserva.id)
-
-    abrirPopup(
-        'Reserva arquivada',
-        'A reserva foi removida da listagem.'
-    )
-  } catch {
-    abrirPopup(
-        'Erro',
-        'Não foi possível arquivar a reserva.',
-        'erro'
-    )
+  } finally {
+    executandoAcaoReserva.value = false
   }
 }
 
@@ -472,5 +502,48 @@ const statusSeveridade = status => ({
         </Card>
       </div>
     </section>
+    <Dialog
+  v-model:visible="confirmacaoReservaVisivel"
+  modal
+  :header="acaoReserva === 'CANCELAR' ? 'Cancelar reserva' : 'Arquivar reserva'"
+  :closable="false"
+  :draggable="false"
+  :close-on-escape="!executandoAcaoReserva"
+  :style="{ width: 'min(92vw, 420px)' }"
+  @after-hide="reservaParaAcao = null"
+>
+  <p v-if="reservaParaAcao">
+    Tem certeza que deseja
+    {{ acaoReserva === 'CANCELAR' ? 'cancelar' : 'arquivar' }}
+    a reserva de
+    <strong>{{ reservaParaAcao.nomeCliente }}</strong>?
+  </p>
+
+  <p class="texto-secundario">
+    {{
+      acaoReserva === 'CANCELAR'
+        ? 'Ela continuará no histórico com o status Cancelada.'
+        : 'Ela será removida da listagem.'
+    }}
+  </p>
+
+  <template #footer>
+    <Button
+      label="Voltar"
+      severity="secondary"
+      text
+      :disabled="executandoAcaoReserva"
+      @click="confirmacaoReservaVisivel = false"
+    />
+
+    <Button
+      :label="acaoReserva === 'CANCELAR' ? 'Cancelar reserva' : 'Arquivar'"
+      severity="danger"
+      :loading="executandoAcaoReserva"
+      :disabled="executandoAcaoReserva"
+      @click="confirmarAcaoReserva"
+    />
+  </template>
+</Dialog>
   </main>
 </template>

@@ -93,6 +93,26 @@ const mostrarQrCode = async (comanda) => {
 }
 
 onMounted(carregarComandas)
+watch(comandas, (lista) => {
+  const selecionada = comandaSelecionada.value
+  if (!selecionada) return
+
+  const atual = lista.find(
+    item => item.id === selecionada.id
+  )
+
+  if (
+    !atual ||
+    atual.status !== 'EM_USO' ||
+    atual.codigoAcesso !== selecionada.codigoAcesso
+  ) {
+    qrCodeVisivel.value = false
+    copiaManualVisivel.value = false
+    qrCodeImagem.value = ''
+    linkParaCopiar.value = ''
+    comandaSelecionada.value = null
+  }
+}, { deep: true })
 
 const criar = async () => {
   if (!numeroNovaComanda.value) {
@@ -140,6 +160,8 @@ const copiarAcesso = async (comanda) => {
   const link = montarLinkComanda(comanda?.codigoAcesso)
   if (!link) return
 
+  comandaSelecionada.value = comanda
+
   if (await copiarTexto(link)) {
     abrirPopup(
         'Link copiado',
@@ -166,22 +188,22 @@ const confirmarArquivamento = async () => {
   }
 
 watch(comandas, (lista) => {
-  const selecionada = comandaSelecionada.value
-  if (!selecionada) return
+  const confirmarArquivamento = async () => {
+  if (!comandaParaArquivar.value) return
 
-  const atual = lista.find(item => item.id === selecionada.id)
+  const id = comandaParaArquivar.value.id
+  processandoId.value = id
 
-  if (
-      !atual ||
-      atual.status !== 'EM_USO' ||
-      atual.codigoAcesso !== selecionada.codigoAcesso
-  ) {
-    qrCodeVisivel.value = false
-    copiaManualVisivel.value = false
-    qrCodeImagem.value = ''
-    linkParaCopiar.value = ''
-    comandaSelecionada.value = null
+  try {
+    const arquivada = await arquivarComanda(id)
+
+    if (arquivada) {
+      cancelarArquivamento()
+    }
+  } finally {
+    processandoId.value = null
   }
+}
 }, { deep: true })
 
   const id = comandaParaArquivar.value.id

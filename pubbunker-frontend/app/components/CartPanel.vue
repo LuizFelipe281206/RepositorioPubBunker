@@ -8,6 +8,21 @@ const {
   finalizar
 } = useCarrinho()
 
+const confirmacaoCancelamentoVisivel = ref(false)
+
+const solicitarCancelamento = () => {
+  if (!carrinho.value.length || enviandoPedido.value) return
+
+  confirmacaoCancelamentoVisivel.value = true
+}
+
+const confirmarCancelamento = () => {
+  if (enviandoPedido.value) return
+
+  cancelar()
+  confirmacaoCancelamentoVisivel.value = false
+}
+
 const precoUnitarioItem = item => {
   return Number(
       item.precoUnitario ?? item.preco ?? 0
@@ -159,11 +174,43 @@ const formatarPreco = valor =>
             label="Cancelar"
             severity="secondary"
             :disabled="!carrinho.length || enviandoPedido"
-            @click="cancelar"
+            @click="solicitarCancelamento"
         />
       </div>
     </template>
   </Card>
+  <Dialog
+  v-model:visible="confirmacaoCancelamentoVisivel"
+  modal
+  header="Limpar carrinho"
+  :closable="false"
+  :draggable="false"
+  :close-on-escape="!enviandoPedido"
+  :style="{ width: 'min(92vw, 420px)' }"
+>
+  <p>Tem certeza que deseja limpar o carrinho?</p>
+
+  <p class="texto-secundario">
+    Serão removidos todos os itens e a observação do carrinho atual.
+  </p>
+
+  <template #footer>
+    <Button
+      label="Voltar"
+      severity="secondary"
+      text
+      :disabled="enviandoPedido"
+      @click="confirmacaoCancelamentoVisivel = false"
+    />
+
+    <Button
+      label="Limpar carrinho"
+      severity="danger"
+      :disabled="enviandoPedido"
+      @click="confirmarCancelamento"
+    />
+  </template>
+</Dialog>
 </template>
 
 <style scoped>
