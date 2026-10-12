@@ -173,6 +173,16 @@ public class ReservaService {
 
     public void deletar(Long id) {
         Reserva reserva = buscarPorId(id);
+        StatusReserva status = reserva.getStatus();
+
+        if (
+                status != StatusReserva.CONCLUIDA &&
+                        status != StatusReserva.CANCELADA
+        ) {
+            throw new RegraNegocioException(
+                    "Somente reservas concluídas ou canceladas podem ser arquivadas."
+            );
+        }
 
         reserva.setDeletedAt(LocalDateTime.now());
 
