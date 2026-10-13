@@ -7,6 +7,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AccessLevel;
 
 @Entity
 @Table(name = "usuarios")
@@ -25,11 +28,28 @@ public class Usuario {
     @Column(unique = true)
     private String email;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Setter(AccessLevel.NONE)
     private String senha;
+
+    @JsonIgnore
+    @Setter(AccessLevel.NONE)
+    @Column(name = "senha_com_hash")
+    private Boolean senhaComHash;
 
     @Enumerated(EnumType.STRING)
     private Role role;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    public void setSenha(String senha) {
+        this.senha = senha;
+        this.senhaComHash = false;
+    }
+
+    public void definirSenhaHash(String hash) {
+        this.senha = hash;
+        this.senhaComHash = true;
+    }
 }

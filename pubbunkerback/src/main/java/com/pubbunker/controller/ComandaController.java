@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/comandas")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class ComandaController {
 

@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/adicionais")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class AdicionalController {
 

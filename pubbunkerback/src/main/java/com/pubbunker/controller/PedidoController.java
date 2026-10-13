@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/pedidos")
-@CrossOrigin("*")
 @RequiredArgsConstructor
 public class PedidoController {
 
