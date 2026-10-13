@@ -181,33 +181,10 @@ const cancelarArquivamento = () => {
   confirmacaoArquivamentoVisivel.value = false
   comandaParaArquivar.value = null
 }
-
 const confirmarArquivamento = async () => {
-  if (!comandaParaArquivar.value) {
-    return
-  }
-
-watch(comandas, (lista) => {
-  const confirmarArquivamento = async () => {
   if (!comandaParaArquivar.value) return
 
   const id = comandaParaArquivar.value.id
-  processandoId.value = id
-
-  try {
-    const arquivada = await arquivarComanda(id)
-
-    if (arquivada) {
-      cancelarArquivamento()
-    }
-  } finally {
-    processandoId.value = null
-  }
-}
-}, { deep: true })
-
-  const id = comandaParaArquivar.value.id
-
   processandoId.value = id
 
   try {
