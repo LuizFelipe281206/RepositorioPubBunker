@@ -45,7 +45,6 @@ export const useAvaliacoes = () => {
     const criarAvaliacao = async (dados) => {
         validarUsuario()
         await $api.post('/avaliacoes', {
-            usuarioId: usuarioId.value,
             nota: Number(dados.nota),
             comentario: (dados.comentario || '').trim() || null
         })

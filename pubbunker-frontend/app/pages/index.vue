@@ -1,19 +1,18 @@
 <script setup>
 const {
   role,
-  restaurarSessao
+  restaurarSessao,
+  rotaInicialPorRole
 } = useAuth()
 
 onMounted(async () => {
-  restaurarSessao()
+  await restaurarSessao()
 
   await navigateTo(
-      role.value === 'ADMIN'
-          ? '/admin'
-          : '/cardapio',
-      {
-        replace: true
-      }
+    rotaInicialPorRole(role.value),
+    {
+      replace: true
+    }
   )
 })
 </script>

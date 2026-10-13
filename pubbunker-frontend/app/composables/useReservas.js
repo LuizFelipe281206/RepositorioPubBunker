@@ -10,7 +10,6 @@ export const useReservas = () => {
     )
 
     const { $api } = useNuxtApp()
-    const { usuarioId } = useAuth()
     const { abrirPopup } = usePopup()
 
     const carregarReservas = async () => {
@@ -34,7 +33,6 @@ export const useReservas = () => {
 
     const criarReserva = async (dados) => {
         await $api.post('/reservas', {
-            funcionarioId: usuarioId.value,
             nomeCliente: dados.nomeCliente,
             quantidadePessoas:
                 Number(dados.quantidadePessoas),

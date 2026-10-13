@@ -3,19 +3,28 @@ export const usePopup = () => {
         mostrar: false,
         titulo: '',
         mensagem: '',
-        tipo: 'sucesso'
+        tipo: 'sucesso',
+        aguardeAte: null
     }))
 
     const abrirPopup = (
         titulo,
         mensagem,
-        tipo = 'sucesso'
+        tipo = 'sucesso',
+        aguardeSegundos = null
     ) => {
+        const segundos = Number(aguardeSegundos)
+        const fim = Date.now() + segundos * 1000
+
         popup.value = {
             mostrar: true,
             titulo,
             mensagem,
-            tipo
+            tipo,
+            aguardeAte:
+                segundos > 0 && Number.isFinite(fim)
+                    ? fim
+                    : null
         }
     }
 

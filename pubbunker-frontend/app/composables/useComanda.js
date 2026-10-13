@@ -78,10 +78,11 @@ export const useComanda = () => {
             erroComanda.value = descreverErroComanda(erro)
 
             abrirPopup(
-                erroComanda.value.titulo,
-                erroComanda.value.mensagem,
-                'erro'
-            )
+    erroComanda.value.titulo,
+    erroComanda.value.mensagem,
+    'erro',
+    erro.response?.status === 429 ? 60 : null
+)
 
             return false
         } finally {

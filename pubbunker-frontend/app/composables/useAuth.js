@@ -115,12 +115,23 @@ export const useAuth = () => {
             } else if (status === 403) {
                 mensagem =
                     'Não foi possível validar a requisição. Atualize a página.'
-            } else if (status) {
+            } else if (status === 429) {
+                mensagem = erro.response.data?.mensagem ||
+                    'Muitas tentativas. Aguarde um minuto e tente novamente.'
+            } else if (status === 503) {
+                mensagem =
+                    'O servidor está ocupado. Tente novamente em instantes.' 
+            }else if (status) {
                 mensagem =
                     'O servidor não conseguiu concluir o login. Tente novamente.'
             }
 
-            abrirPopup('Erro', mensagem, 'erro')
+            abrirPopup(
+    'Erro',
+    mensagem,
+    'erro',
+    status === 429 ? 60 : null
+)
             return false
         }
     }

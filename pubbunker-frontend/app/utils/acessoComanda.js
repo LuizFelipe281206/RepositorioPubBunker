@@ -23,6 +23,14 @@ export const enderecoApenasLocal = (baseUrl) => {
 export const descreverErroComanda = (erro) => {
     const status = erro.response?.status
 
+    if (status === 429) {
+    return {
+        titulo: 'Muitas tentativas',
+        mensagem: erro.response.data?.mensagem ||
+            'Aguarde um minuto e tente acessar a comanda novamente.'
+    }
+}
+
     if ([400, 401, 404].includes(status)) {
         return {
             titulo: 'Comanda indisponível',
