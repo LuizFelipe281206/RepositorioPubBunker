@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware((to) => {
+export default defineNuxtRouteMiddleware(async (to) => {
     if (import.meta.server) return
 
     const auth = useAuth()
@@ -8,7 +8,7 @@ export default defineNuxtRouteMiddleware((to) => {
         restaurarComanda
     } = useComanda()
 
-    auth.restaurarSessao()
+    await auth.restaurarSessao()
     restaurarComanda()
 
     const sessaoAtiva =

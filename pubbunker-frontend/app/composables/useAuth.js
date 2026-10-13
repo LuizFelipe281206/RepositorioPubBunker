@@ -1,58 +1,85 @@
 export const useAuth = () => {
-    const usuarioLogado = useState(
-        'usuario-logado',
-        () => false
-    )
+    const usuarioLogado =
+        useState('usuario-logado', () => false)
 
-    const usuarioId = useState(
-        'usuario-id',
-        () => null
-    )
+    const usuarioId =
+        useState('usuario-id', () => null)
 
-    const role = useState(
-        'usuario-role',
-        () => ''
-    )
+    const role =
+        useState('usuario-role', () => '')
 
-    const nomeUsuario = useState(
-        'usuario-nome',
-        () => ''
-    )
+    const nomeUsuario =
+        useState('usuario-nome', () => '')
+
+    const versaoSessao =
+        useState('versao-sessao', () => 0)
 
     const { $api } = useNuxtApp()
     const { abrirPopup } = usePopup()
 
-    const rotaInicialPorRole = (roleUsuario) => {
-        if (roleUsuario === 'ADMIN') {
-            return '/admin'
+    const limparDadosAntigos = () => {
+        if (import.meta.client) {
+            try {
+                for (const chave of ['usuarioId', 'role', 'nome']) {
+                    localStorage.removeItem(chave)
+                }
+            } catch {
+                // O login não depende desses dados antigos.
+            }
         }
+    }
 
-        if (roleUsuario === 'FUNCIONARIO') {
-            return '/reservas'
-        }
+    const limparSessao = () => {
+        versaoSessao.value++
+
+        usuarioLogado.value = false
+        usuarioId.value = null
+        role.value = ''
+        nomeUsuario.value = ''
+
+        limparDadosAntigos()
+    }
+
+    const aplicarSessao = (usuario) => {
+        versaoSessao.value++
+
+        usuarioId.value = usuario.id
+        role.value = usuario.role
+        nomeUsuario.value = usuario.nome
+        usuarioLogado.value = true
+
+        limparDadosAntigos()
+    }
+
+    const rotaInicialPorRole = (perfil) => {
+        if (perfil === 'ADMIN') return '/admin'
+        if (perfil === 'FUNCIONARIO') return '/reservas'
 
         return '/cardapio'
     }
 
-    const restaurarSessao = () => {
-        if (import.meta.server) return
+    const restaurarSessao = async () => {
+        if (import.meta.server) return false
 
-        const idSalvo =
-            localStorage.getItem('usuarioId')
+        const versao = versaoSessao.value
 
-        usuarioId.value =
-            idSalvo ? Number(idSalvo) : null
+        try {
+            const { data } = await $api.get('/auth/me')
 
-        role.value =
-            localStorage.getItem('role') || ''
+            if (versao !== versaoSessao.value) {
+                return usuarioLogado.value
+            }
 
-        nomeUsuario.value =
-            localStorage.getItem('nome') || ''
+            aplicarSessao(data)
+            return true
 
-        usuarioLogado.value = Boolean(
-            usuarioId.value &&
-            role.value
-        )
+        } catch {
+            if (versao === versaoSessao.value) {
+                limparSessao()
+            }
+
+            return usuarioLogado.value
+        }
     }
 
     const login = async (credenciais) => {
@@ -62,25 +89,7 @@ export const useAuth = () => {
                 credenciais
             )
 
-            localStorage.setItem(
-                'usuarioId',
-                String(data.id)
-            )
-
-            localStorage.setItem(
-                'role',
-                data.role
-            )
-
-            localStorage.setItem(
-                'nome',
-                data.nome
-            )
-
-            usuarioId.value = data.id
-            role.value = data.role
-            nomeUsuario.value = data.nome
-            usuarioLogado.value = true
+            aplicarSessao(data)
 
             abrirPopup(
                 'Sucesso',
@@ -90,26 +99,51 @@ export const useAuth = () => {
             await navigateTo(
                 rotaInicialPorRole(data.role)
             )
-        } catch {
-            abrirPopup(
-                'Erro',
-                'Email ou senha inválidos.',
-                'erro'
-            )
+
+            return true
+
+        } catch (erro) {
+            const status = erro.response?.status
+
+            let mensagem =
+                'Não foi possível conectar ao servidor. Verifique a conexão.'
+
+            if (status === 401) {
+                mensagem = 'Email ou senha inválidos.'
+            } else if (status === 400) {
+                mensagem = 'Confira o email e a senha informados.'
+            } else if (status === 403) {
+                mensagem =
+                    'Não foi possível validar a requisição. Atualize a página.'
+            } else if (status) {
+                mensagem =
+                    'O servidor não conseguiu concluir o login. Tente novamente.'
+            }
+
+            abrirPopup('Erro', mensagem, 'erro')
+            return false
         }
     }
 
     const logout = async () => {
-        localStorage.removeItem('usuarioId')
-        localStorage.removeItem('role')
-        localStorage.removeItem('nome')
+        try {
+            await $api.post('/auth/logout')
 
-        usuarioId.value = null
-        usuarioLogado.value = false
-        role.value = ''
-        nomeUsuario.value = ''
+            limparSessao()
+            useComanda().limparComanda()
 
-        await navigateTo('/login')
+            await navigateTo('/login')
+            return true
+
+        } catch {
+            abrirPopup(
+                'Erro',
+                'Não foi possível encerrar a sessão. Tente novamente.',
+                'erro'
+            )
+
+            return false
+        }
     }
 
     return {
@@ -119,6 +153,7 @@ export const useAuth = () => {
         nomeUsuario,
         restaurarSessao,
         login,
-        logout
+        logout,
+        rotaInicialPorRole
     }
 }

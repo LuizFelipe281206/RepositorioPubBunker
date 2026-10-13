@@ -1,66 +1,20 @@
 <script setup>
-definePageMeta({
-  role: 'ADMIN'
-})
-
 const {
-  produtos,
-  carregarProdutos,
-  excluirProduto
-} = useProdutos()
+  role,
+  restaurarSessao,
+  rotaInicialPorRole
+} = useAuth()
 
-const { abrirPopup } = usePopup()
+onMounted(async () => {
+  await restaurarSessao()
 
-const produtoEditando = ref(null)
-
-const edicaoProdutoVisivel = ref(false)
-
-const editarProduto = (produto) => {
-  produtoEditando.value = produto
-  edicaoProdutoVisivel.value = true
-}
-
-onMounted(carregarProdutos)
-
-const produtoParaExcluir = ref(null)
-const confirmacaoProdutoVisivel = ref(false)
-const excluindoProduto = ref(false)
-
-const solicitarExclusao = (id) => {
-  if (excluindoProduto.value) return
-
-  const produto = produtos.value.find(item => item.id === id)
-  if (!produto || produto.ativo) return
-
-  produtoParaExcluir.value = produto
-  confirmacaoProdutoVisivel.value = true
-}
-
-const excluir = async () => {
-  if (!produtoParaExcluir.value || excluindoProduto.value) return
-
-  excluindoProduto.value = true
-
-  try {
-    await excluirProduto(produtoParaExcluir.value.id)
-
-    confirmacaoProdutoVisivel.value = false
-
-    abrirPopup(
-      'Produto excluído',
-      'O produto foi removido com sucesso.'
-    )
-  } catch (error) {
-    abrirPopup(
-      'Erro',
-      error.response?.data?.mensagem ||
-        'Não foi possível excluir o produto.',
-      'erro'
-    )
-  } finally {
-    excluindoProduto.value = false
-  }
-}
+  await navigateTo(
+      rotaInicialPorRole(role.value),
+      {
+        replace: true
+      }
+  )
+})
 </script>
 
 <template>

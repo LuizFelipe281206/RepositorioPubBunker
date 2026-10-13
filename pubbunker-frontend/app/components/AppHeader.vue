@@ -9,8 +9,7 @@ const {
 
 const {
   comandaAtual,
-  comandaAtiva,
-  sairComanda
+  comandaAtiva
 } = useComanda()
 
 const route = useRoute()
@@ -36,11 +35,6 @@ const irPara = async (caminho) => {
 }
 
 const sair = async () => {
-  if (comandaAtiva.value) {
-    await sairComanda()
-    return
-  }
-
   await logout()
 }
 
