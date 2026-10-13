@@ -15,12 +15,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import com.pubbunker.security.IdentidadeUsuario;
+import org.springframework.security.access.AccessDeniedException;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class AvaliacaoService {
 
+    private final IdentidadeUsuario identidadeUsuario;
     private final AvaliacaoRepository avaliacaoRepository;
     private final UsuarioRepository usuarioRepository;
 
@@ -32,6 +35,7 @@ public class AvaliacaoService {
 
     @Transactional(readOnly = true)
     public List<Avaliacao> listarPorUsuario(Long usuarioId) {
+        identidadeUsuario.exigirProprioUsuarioOuAdmin(usuarioId);
         usuarioRepository
                 .findByIdAndDeletedAtIsNull(usuarioId)
                 .orElseThrow(
@@ -49,22 +53,29 @@ public class AvaliacaoService {
 
     @Transactional(readOnly = true)
     public Avaliacao buscarPorId(Long id) {
-        return avaliacaoRepository
+        Avaliacao avaliacao = avaliacaoRepository
                 .findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(
                         () -> new RecursoNaoEncontradoException(
                                 "Avaliação não encontrada com id: " + id
                         )
                 );
+
+        identidadeUsuario.exigirProprioUsuarioOuAdmin(
+                avaliacao.getUsuario().getId()
+        );
+
+        return avaliacao;
     }
 
     public Avaliacao criar(CriarAvaliacaoDTO dto) {
+        Long usuarioId = identidadeUsuario.cliente().id();
         Usuario usuario = usuarioRepository
-                .findByIdAndDeletedAtIsNull(dto.getUsuarioId())
+                .findByIdAndDeletedAtIsNull(usuarioId)
                 .orElseThrow(
                         () -> new RecursoNaoEncontradoException(
                                 "Usuário não encontrado com id: "
-                                        + dto.getUsuarioId()
+                                        + usuarioId
                         )
                 );
 
@@ -91,6 +102,7 @@ public class AvaliacaoService {
             AtualizarAvaliacaoDTO dto
     ) {
         Avaliacao avaliacao = buscarPorId(id);
+        validarAutor(avaliacao);
 
         avaliacao.setNota(dto.getNota());
         avaliacao.setComentario(
@@ -104,9 +116,18 @@ public class AvaliacaoService {
 
     public void deletar(Long id) {
         Avaliacao avaliacao = buscarPorId(id);
+        validarAutor(avaliacao);
 
         avaliacao.setDeletedAt(LocalDateTime.now());
 
         avaliacaoRepository.save(avaliacao);
+    }
+
+    private void validarAutor(Avaliacao avaliacao) {
+        Long usuarioId = identidadeUsuario.cliente().id();
+
+        if (!usuarioId.equals(avaliacao.getUsuario().getId())) {
+            throw new AccessDeniedException("Operação não permitida.");
+        }
     }
 }

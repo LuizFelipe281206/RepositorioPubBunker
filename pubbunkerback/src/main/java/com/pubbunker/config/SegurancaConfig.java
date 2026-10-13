@@ -31,7 +31,10 @@ import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
+import com.pubbunker.security.ControleTentativas;
+import com.pubbunker.security.ProtecaoTentativasFilter;
+import org.springframework.security.web.csrf.CsrfFilter;
+import java.util.Locale;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -66,44 +69,52 @@ public class SegurancaConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(
-            UsuarioService service
+            UsuarioService service,
+            ControleTentativas controle
     ) {
         return tentativa -> {
-            Usuario usuario = null;
+            String email = tentativa.getName().trim();
 
-            try {
-                usuario = service.buscarPorEmail(
-                        tentativa.getName().trim()
+            try (var limite = controle.iniciar(
+                    "conta:" + email.toLowerCase(Locale.ROOT),
+                    10
+            )) {
+                Usuario usuario = null;
+
+                try {
+                    usuario = service.buscarPorEmail(email);
+                } catch (RecursoNaoEncontradoException exception) {
+                    // Conta ausente e senha incorreta têm a mesma resposta.
+                }
+
+                String senha =
+                        tentativa.getCredentials() instanceof String valor
+                                ? valor
+                                : null;
+
+                if (!service.verificarSenha(usuario, senha)) {
+                    limite.registrarFalha();
+
+                    throw new BadCredentialsException(
+                            "Email ou senha inválidos."
+                    );
+                }
+
+                var principal = new UsuarioSessao(
+                        usuario.getId(),
+                        usuario.getNome(),
+                        usuario.getEmail(),
+                        usuario.getRole()
                 );
-            } catch (RecursoNaoEncontradoException exception) {
-                // Conta ausente e senha incorreta têm a mesma resposta.
-            }
 
-            String senha =
-                    tentativa.getCredentials() instanceof String valor
-                            ? valor
-                            : null;
-
-            if (!service.verificarSenha(usuario, senha)) {
-                throw new BadCredentialsException(
-                        "Email ou senha inválidos."
+                return UsernamePasswordAuthenticationToken.authenticated(
+                        principal,
+                        null,
+                        List.of(new SimpleGrantedAuthority(
+                                "ROLE_" + usuario.getRole()
+                        ))
                 );
             }
-
-            var principal = new UsuarioSessao(
-                    usuario.getId(),
-                    usuario.getNome(),
-                    usuario.getEmail(),
-                    usuario.getRole()
-            );
-
-            return UsernamePasswordAuthenticationToken.authenticated(
-                    principal,
-                    null,
-                    List.of(new SimpleGrantedAuthority(
-                            "ROLE_" + usuario.getRole()
-                    ))
-            );
         };
     }
 
@@ -148,7 +159,8 @@ public class SegurancaConfig {
             @Qualifier("corsConfigurationSource")
             CorsConfigurationSource corsSource,
             UsuarioService service,
-            ObjectMapper mapper
+            ObjectMapper mapper,
+            ControleTentativas controle
     ) throws Exception {
 
         http
@@ -193,8 +205,55 @@ public class SegurancaConfig {
 
                         .requestMatchers("/auth/**").denyAll()
 
-                        // As permissões dos módulos entram no próximo bloco.
-                        .anyRequest().permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/produtos",
+                                "/produtos/{id}",
+                                "/adicionais",
+                                "/adicionais/{id}",
+                                "/comandas/acesso/{codigoAcesso}",
+                                "/pedidos/comanda/{codigoAcesso}"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/pedidos"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                "/produtos/**",
+                                "/adicionais/**"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                "/comandas/**",
+                                "/pedidos/**"
+                        ).hasAnyRole("ADMIN", "FUNCIONARIO")
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/reservas/**"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                "/reservas/**"
+                        ).hasAnyRole("ADMIN", "FUNCIONARIO")
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/avaliacoes"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/avaliacoes/**"
+                        ).hasAnyRole("ADMIN", "CLIENTE")
+
+                        .requestMatchers(
+                                "/avaliacoes/**"
+                        ).hasRole("CLIENTE")
+
+                        .anyRequest().denyAll()
                 )
 
                 .exceptionHandling(errors -> errors
@@ -249,6 +308,11 @@ public class SegurancaConfig {
                 .addFilterBefore(
                         new SessaoUsuarioFilter(service, repository),
                         AnonymousAuthenticationFilter.class
+                )
+
+                .addFilterBefore(
+                        new ProtecaoTentativasFilter(controle, mapper),
+                        CsrfFilter.class
                 );
 
         return http.build();

@@ -17,12 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import com.pubbunker.security.IdentidadeUsuario;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class ReservaService {
 
+    private final IdentidadeUsuario identidadeUsuario;
     private final ReservaRepository reservaRepository;
     private final UsuarioRepository usuarioRepository;
 
@@ -73,14 +75,13 @@ public class ReservaService {
     }
 
     public Reserva criar(CriarReservaDTO dto) {
+        Long funcionarioId = identidadeUsuario.equipe().id();
         Usuario funcionario = usuarioRepository
-                .findByIdAndDeletedAtIsNull(
-                        dto.getFuncionarioId()
-                )
+                .findByIdAndDeletedAtIsNull(funcionarioId)
                 .orElseThrow(
                         () -> new RecursoNaoEncontradoException(
                                 "Funcionário não encontrado com id: "
-                                        + dto.getFuncionarioId()
+                                        + funcionarioId
                         )
                 );
 

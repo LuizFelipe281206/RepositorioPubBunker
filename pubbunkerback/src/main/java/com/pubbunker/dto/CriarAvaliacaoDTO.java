@@ -11,9 +11,6 @@ import lombok.Setter;
 @Setter
 public class CriarAvaliacaoDTO {
 
-    @NotNull(message = "O usuário deve ser informado.")
-    private Long usuarioId;
-
     @NotNull(message = "A nota deve ser informada.")
     @Min(
             value = 1,

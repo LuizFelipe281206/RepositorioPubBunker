@@ -14,9 +14,6 @@ import java.time.LocalDateTime;
 @Setter
 public class CriarReservaDTO {
 
-    @NotNull(message = "O funcionário deve ser informado.")
-    private Long funcionarioId;
-
     @NotBlank(message = "O nome do cliente deve ser informado.")
     @Size(
             max = 100,

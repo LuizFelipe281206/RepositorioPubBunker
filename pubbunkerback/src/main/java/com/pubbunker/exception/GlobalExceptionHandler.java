@@ -9,9 +9,40 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> tratarPermissao(
+            AccessDeniedException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(Map.of(
+                        "status", 403,
+                        "codigo", "REQUISICAO_NAO_AUTORIZADA",
+                        "mensagem",
+                        "Você não tem permissão para realizar esta operação."
+                ));
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> tratarSessao(
+            AuthenticationException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of(
+                        "status", 401,
+                        "codigo", "SESSAO_INVALIDA",
+                        "mensagem",
+                        "Entre na sua conta para continuar."
+                ));
+    }
+
     @ExceptionHandler(AcessoComandaInvalidoException.class)
     public ResponseEntity<Map<String, Object>> tratarAcessoComanda(
             AcessoComandaInvalidoException exception
@@ -93,10 +124,28 @@ public class GlobalExceptionHandler {
         resposta.put("data", LocalDateTime.now());
         resposta.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
         resposta.put("erro", "Erro interno");
-        resposta.put("mensagem", exception.getMessage());
-
+        resposta.put(
+                "mensagem",
+                "O servidor não conseguiu concluir a operação."
+        );
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(resposta);
+    }
+    @ExceptionHandler(MuitasTentativasException.class)
+    public ResponseEntity<Map<String, Object>> tratarTentativas(
+            MuitasTentativasException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(
+                        "Retry-After",
+                        Long.toString(exception.getSegundos())
+                )
+                .body(Map.of(
+                        "codigo", "MUITAS_TENTATIVAS",
+                        "mensagem", exception.getMessage(),
+                        "aguardeSegundos", exception.getSegundos()
+                ));
     }
 }
