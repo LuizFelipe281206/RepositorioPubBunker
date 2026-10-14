@@ -123,6 +123,17 @@ const paginaAtual = (caminho) =>
   @click="irPara('/admin/cadastros')"
 />
 
+<Button
+  v-if="role === 'ADMIN'"
+  label="Avaliações"
+  icon="pi pi-star"
+  class="botao-navegacao"
+  :class="{
+    'botao-navegacao-ativo': paginaAtual('/admin/avaliacoes')
+  }"
+  @click="irPara('/admin/avaliacoes')"
+/>
+
           <Button
             label="Comandas"
             icon="pi pi-qrcode"

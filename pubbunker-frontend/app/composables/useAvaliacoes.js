@@ -1,78 +1,143 @@
 export const useAvaliacoes = () => {
-    const avaliacoes = useState(
-        'avaliacoes',
-        () => []
-    )
-
-    const carregandoAvaliacoes = useState(
-        'carregando-avaliacoes',
-        () => false
-    )
+    const avaliacoes = useState('avaliacoes', () => [])
+    const carregandoAvaliacoes = useState('carregando-avaliacoes', () => false)
+    const versaoConsulta = useState('versao-consulta-avaliacoes', () => 0)
 
     const { $api } = useNuxtApp()
-    const { usuarioId, role } = useAuth()
-    const podeAvaliar = computed(() => Boolean(usuarioId.value) && role.value === 'CLIENTE')
-    const validarUsuario = () => {
-        if (!podeAvaliar.value) throw new Error('Entre com uma conta de cliente para avaliar.')
-    }
+    const { codigoComanda, comandaAtiva, tratarAcessoInvalido } = useComanda()
     const { abrirPopup } = usePopup()
 
+    const podeAvaliar = computed(
+        () => comandaAtiva.value && Boolean(codigoComanda.value)
+    )
+
+    const validarComanda = () => {
+        if (!podeAvaliar.value) {
+            throw new Error('Acesse uma comanda aberta para avaliar.')
+        }
+
+        return codigoComanda.value
+    }
+
+    const urlComanda = codigo =>
+        `/avaliacoes/comanda/${encodeURIComponent(codigo)}`
+
+    const dadosAvaliacao = dados => ({
+        nota: Number(dados.nota),
+        nomeCliente: (dados.nomeCliente || '').trim() || null,
+        comentario: (dados.comentario || '').trim() || null
+    })
+
+    const registrarAlteracao = () => {
+        versaoConsulta.value++
+        carregandoAvaliacoes.value = false
+    }
+
     const carregarAvaliacoes = async () => {
+        const versao = ++versaoConsulta.value
+
         if (!podeAvaliar.value) {
             avaliacoes.value = []
+            carregandoAvaliacoes.value = false
             return
         }
 
+        const codigo = codigoComanda.value
         carregandoAvaliacoes.value = true
 
         try {
-            const { data } = await $api.get(
-                `/avaliacoes/usuario/${usuarioId.value}`
-            )
+            const { data } = await $api.get(urlComanda(codigo))
 
-            avaliacoes.value = data
-        } catch {
-            abrirPopup(
-                'Erro',
-                'Não foi possível carregar suas avaliações.',
-                'erro'
-            )
+            if (
+                versao === versaoConsulta.value &&
+                codigo === codigoComanda.value
+            ) {
+                avaliacoes.value = data
+            }
+        } catch (erro) {
+            if (
+                versao !== versaoConsulta.value ||
+                codigo !== codigoComanda.value
+            ) return
+
+            avaliacoes.value = []
+
+            if (!tratarAcessoInvalido(erro, codigo)) {
+                abrirPopup(
+                    'Erro',
+                    erro.response?.data?.mensagem ||
+                        'Não foi possível carregar as avaliações.',
+                    'erro',
+                    erro.response?.status === 429 ? 60 : null
+                )
+            }
         } finally {
-            carregandoAvaliacoes.value = false
+            if (versao === versaoConsulta.value) {
+                carregandoAvaliacoes.value = false
+            }
         }
     }
 
-    const criarAvaliacao = async (dados) => {
-        validarUsuario()
-        await $api.post('/avaliacoes', {
-            nota: Number(dados.nota),
-            comentario: (dados.comentario || '').trim() || null
-        })
+    const criarAvaliacao = async dados => {
+        const codigo = validarComanda()
 
-        await carregarAvaliacoes()
+        try {
+            const { data } = await $api.post(
+                urlComanda(codigo),
+                dadosAvaliacao(dados)
+            )
+
+            if (codigo !== codigoComanda.value) return false
+
+            registrarAlteracao()
+            avaliacoes.value = [data, ...avaliacoes.value]
+            return true
+        } catch (erro) {
+            if (codigo !== codigoComanda.value) return false
+            if (tratarAcessoInvalido(erro, codigo)) return false
+            throw erro
+        }
     }
 
-    const atualizarAvaliacao = async (
-        id,
-        dados
-    ) => {
-        validarUsuario()
-        await $api.put(
-            `/avaliacoes/${id}`,
-            {
-                nota: Number(dados.nota),
-                comentario: (dados.comentario || '').trim() || null
-            }
-        )
+    const atualizarAvaliacao = async (id, dados) => {
+        const codigo = validarComanda()
 
-        await carregarAvaliacoes()
+        try {
+            const { data } = await $api.put(
+                `${urlComanda(codigo)}/${id}`,
+                dadosAvaliacao(dados)
+            )
+
+            if (codigo !== codigoComanda.value) return false
+
+            registrarAlteracao()
+            avaliacoes.value = avaliacoes.value.map(
+                item => item.id === id ? data : item
+            )
+            return true
+        } catch (erro) {
+            if (codigo !== codigoComanda.value) return false
+            if (tratarAcessoInvalido(erro, codigo)) return false
+            throw erro
+        }
     }
 
-    const excluirAvaliacao = async (id) => {
-        validarUsuario()
-        await $api.delete(`/avaliacoes/${id}`)
+    const excluirAvaliacao = async id => {
+        const codigo = validarComanda()
 
-        await carregarAvaliacoes()
+        try {
+            await $api.delete(`${urlComanda(codigo)}/${id}`)
+
+            if (codigo !== codigoComanda.value) return false
+
+            registrarAlteracao()
+            avaliacoes.value = avaliacoes.value.filter(item => item.id !== id)
+            return true
+        } catch (erro) {
+            if (codigo !== codigoComanda.value) return false
+            if (tratarAcessoInvalido(erro, codigo)) return false
+            throw erro
+        }
     }
 
     return {
