@@ -1,10 +1,6 @@
 package com.pubbunker.dto;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,6 +12,10 @@ import java.util.List;
 @Setter
 public class SalvarProdutoDTO {
 
+    @DecimalMax(
+            value = "1000.00",
+            message = "O preço do produto deve ser no máximo R$ 1.000,00."
+    )
     @NotBlank(
             message = "O nome do produto deve ser informado."
     )
@@ -59,6 +59,10 @@ public class SalvarProdutoDTO {
 
     private Boolean ativo;
 
-    private List<Long> adicionaisIds =
-            new ArrayList<>();
+    @Size(max = 10, message = "O produto deve possuir no máximo 10 adicionais.")
+    private List<
+            @NotNull(message = "O identificador do adicional deve ser informado.")
+            @Positive(message = "O identificador do adicional deve ser maior que zero.")
+                    Long
+            > adicionaisIds = new ArrayList<>();
 }

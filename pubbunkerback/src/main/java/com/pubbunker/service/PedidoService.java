@@ -26,12 +26,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.pubbunker.security.ControleTentativas;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class PedidoService {
 
+    private final ControleTentativas controleTentativas;
     private final PedidoRepository pedidoRepository;
     private final ProdutoRepository produtoRepository;
     private final ComandaService comandaService;
@@ -83,6 +85,12 @@ public class PedidoService {
 
         Comanda comanda = comandaService.buscarAtivaPorCodigo(
                 dto.getCodigoComanda().trim()
+        );
+
+        controleTentativas.consumir(
+                "envio-pedido:atendimento:" + comanda.getId()
+                        + ":" + comanda.getDataAbertura(),
+                10
         );
 
         Set<Long> produtosIds = new LinkedHashSet<>();
@@ -151,11 +159,12 @@ public class PedidoService {
                     .map(Adicional::getPreco)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            BigDecimal precoUnitario =
-                    produto.getPreco().add(valorAdicionais);
+            BigDecimal precoUnitario = ValoresPedido.validar(
+                    produto.getPreco().add(valorAdicionais)
+            );
 
-            BigDecimal subtotal = precoUnitario.multiply(
-                    BigDecimal.valueOf(quantidade)
+            BigDecimal subtotal = ValoresPedido.validar(
+                    precoUnitario.multiply(BigDecimal.valueOf(quantidade))
             );
 
             ItemPedido item = new ItemPedido();
@@ -169,7 +178,7 @@ public class PedidoService {
                     .collect(Collectors.toCollection(java.util.ArrayList::new)));
 
             pedido.adicionarItem(item);
-            valorTotal = valorTotal.add(subtotal);
+            valorTotal = ValoresPedido.validar(valorTotal.add(subtotal));
         }
 
         pedido.setValorTotal(valorTotal);

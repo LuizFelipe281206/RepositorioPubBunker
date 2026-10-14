@@ -9,11 +9,17 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.Positive;
 
 @Getter
 @Setter
 public class SalvarAdicionalDTO {
 
+    @DecimalMax(
+            value = "100.00",
+            message = "O preço do adicional deve ser no máximo R$ 100,00."
+    )
     @NotBlank(
             message = "O nome do adicional deve ser informado."
     )

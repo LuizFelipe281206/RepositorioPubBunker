@@ -65,7 +65,11 @@ public class ControleTentativas {
         entrada.emAndamento++;
         return new Tentativa(entrada);
     }
-
+    public void consumir(String chave, int limite) {
+        try (var tentativa = iniciar(chave, limite)) {
+            tentativa.registrarFalha();
+        }
+    }
     private static class Entrada {
         final long inicio;
         int falhas;

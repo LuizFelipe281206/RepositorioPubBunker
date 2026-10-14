@@ -3,6 +3,7 @@ package com.pubbunker.dto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,7 +24,10 @@ public class CriarPedidoDTO {
     )
     private String observacao;
 
-    @Valid
     @NotEmpty(message = "O pedido deve possuir pelo menos um item.")
-    private List<ItemPedidoRequestDTO> itens;
+    @Size(max = 50, message = "O pedido deve possuir no máximo 50 itens.")
+    private List<
+            @NotNull(message = "O pedido não pode conter um item nulo.")
+            @Valid ItemPedidoRequestDTO
+            > itens;
 }

@@ -11,6 +11,9 @@ import java.util.HashMap;
 import java.util.Map;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -108,11 +111,38 @@ public class GlobalExceptionHandler {
         resposta.put("data", LocalDateTime.now());
         resposta.put("status", HttpStatus.BAD_REQUEST.value());
         resposta.put("erro", "Dados inválidos");
+        resposta.put("codigo", "DADOS_INVALIDOS");
+        resposta.put("mensagem", "Confira os dados informados.");
         resposta.put("campos", campos);
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(resposta);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> tratarCorpoInvalido(
+            HttpMessageNotReadableException exception
+    ) {
+        return ResponseEntity.badRequest().body(Map.of(
+                "status", 400,
+                "codigo", "DADOS_INVALIDOS",
+                "mensagem", "Confira o formato e os valores dos dados enviados."
+        ));
+    }
+
+    @ExceptionHandler({
+            MethodArgumentTypeMismatchException.class,
+            MissingServletRequestParameterException.class
+    })
+    public ResponseEntity<Map<String, Object>> tratarParametroInvalido(
+            Exception exception
+    ) {
+        return ResponseEntity.badRequest().body(Map.of(
+                "status", 400,
+                "codigo", "DADOS_INVALIDOS",
+                "mensagem", "Um parâmetro da requisição é inválido ou não foi informado."
+        ));
     }
 
     @ExceptionHandler(Exception.class)
@@ -147,5 +177,15 @@ public class GlobalExceptionHandler {
                         "mensagem", exception.getMessage(),
                         "aguardeSegundos", exception.getSegundos()
                 ));
+    }
+    @ExceptionHandler(CorpoMuitoGrandeException.class)
+    public ResponseEntity<Map<String, Object>> tratarCorpoMuitoGrande(
+            CorpoMuitoGrandeException exception
+    ) {
+        return ResponseEntity.status(413).body(Map.of(
+                "status", 413,
+                "codigo", "CORPO_MUITO_GRANDE",
+                "mensagem", exception.getMessage()
+        ));
     }
 }

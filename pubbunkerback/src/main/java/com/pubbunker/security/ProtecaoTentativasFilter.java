@@ -63,6 +63,13 @@ public class ProtecaoTentativasFilter extends OncePerRequestFilter {
         }
 
         try {
+            if ("POST".equals(request.getMethod()) &&
+                    "/pedidos".equals(request.getServletPath())) {
+                controle.consumir(
+                        "envio-pedido:ip:" + request.getRemoteAddr(),
+                        120
+                );
+            }
             try (var tentativa = controle.iniciar(
                     "ip:" + escopo + ":" + request.getRemoteAddr(),
                     login ? 20 : 60
