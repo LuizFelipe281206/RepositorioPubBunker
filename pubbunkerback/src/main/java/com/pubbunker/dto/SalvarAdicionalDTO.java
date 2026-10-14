@@ -15,11 +15,6 @@ import jakarta.validation.constraints.Positive;
 @Getter
 @Setter
 public class SalvarAdicionalDTO {
-
-    @DecimalMax(
-            value = "100.00",
-            message = "O preço do adicional deve ser no máximo R$ 100,00."
-    )
     @NotBlank(
             message = "O nome do adicional deve ser informado."
     )
@@ -29,17 +24,16 @@ public class SalvarAdicionalDTO {
     )
     private String nome;
 
-    @NotNull(
-            message = "O preço do adicional deve ser informado."
-    )
-    @DecimalMin(
-            value = "0.00",
-            message = "O preço não pode ser negativo."
-    )
+    @NotNull(message = "O preço do adicional deve ser informado.")
+    @DecimalMin(value = "0.00", message = "O preço não pode ser negativo.")
     @Digits(
             integer = 8,
             fraction = 2,
             message = "O preço deve possuir no máximo duas casas decimais."
+    )
+    @DecimalMax(
+            value = "100.00",
+            message = "O preço do adicional deve ser no máximo R$ 100,00."
     )
     private BigDecimal preco;
 
