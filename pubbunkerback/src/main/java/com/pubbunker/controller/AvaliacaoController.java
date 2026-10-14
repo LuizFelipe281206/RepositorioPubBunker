@@ -18,6 +18,47 @@ public class AvaliacaoController {
 
     private final AvaliacaoService service;
 
+    @GetMapping("/comanda/{codigoAcesso}")
+    public List<AvaliacaoResponseDTO> listarPorComanda(
+            @PathVariable String codigoAcesso
+    ) {
+        return service.listarPorComanda(codigoAcesso)
+                .stream()
+                .map(AvaliacaoResponseDTO::new)
+                .toList();
+    }
+
+    @PostMapping("/comanda/{codigoAcesso}")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AvaliacaoResponseDTO criarPorComanda(
+            @PathVariable String codigoAcesso,
+            @Valid @RequestBody CriarAvaliacaoDTO dto
+    ) {
+        return new AvaliacaoResponseDTO(
+                service.criarPorComanda(codigoAcesso, dto)
+        );
+    }
+
+    @PutMapping("/comanda/{codigoAcesso}/{id}")
+    public AvaliacaoResponseDTO atualizarPorComanda(
+            @PathVariable String codigoAcesso,
+            @PathVariable Long id,
+            @Valid @RequestBody AtualizarAvaliacaoDTO dto
+    ) {
+        return new AvaliacaoResponseDTO(
+                service.atualizarPorComanda(codigoAcesso, id, dto)
+        );
+    }
+
+    @DeleteMapping("/comanda/{codigoAcesso}/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletarPorComanda(
+            @PathVariable String codigoAcesso,
+            @PathVariable Long id
+    ) {
+        service.deletarPorComanda(codigoAcesso, id);
+    }
+
     @GetMapping
     public List<AvaliacaoResponseDTO> listarTodas() {
         return service.listarTodas()
@@ -27,12 +68,8 @@ public class AvaliacaoController {
     }
 
     @GetMapping("/{id}")
-    public AvaliacaoResponseDTO buscarPorId(
-            @PathVariable Long id
-    ) {
-        return new AvaliacaoResponseDTO(
-                service.buscarPorId(id)
-        );
+    public AvaliacaoResponseDTO buscarPorId(@PathVariable Long id) {
+        return new AvaliacaoResponseDTO(service.buscarPorId(id));
     }
 
     @GetMapping("/usuario/{usuarioId}")
@@ -50,9 +87,7 @@ public class AvaliacaoController {
     public AvaliacaoResponseDTO criar(
             @Valid @RequestBody CriarAvaliacaoDTO dto
     ) {
-        return new AvaliacaoResponseDTO(
-                service.criar(dto)
-        );
+        return new AvaliacaoResponseDTO(service.criar(dto));
     }
 
     @PutMapping("/{id}")
@@ -60,16 +95,12 @@ public class AvaliacaoController {
             @PathVariable Long id,
             @Valid @RequestBody AtualizarAvaliacaoDTO dto
     ) {
-        return new AvaliacaoResponseDTO(
-                service.atualizar(id, dto)
-        );
+        return new AvaliacaoResponseDTO(service.atualizar(id, dto));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deletar(
-            @PathVariable Long id
-    ) {
+    public void deletar(@PathVariable Long id) {
         service.deletar(id);
     }
 }

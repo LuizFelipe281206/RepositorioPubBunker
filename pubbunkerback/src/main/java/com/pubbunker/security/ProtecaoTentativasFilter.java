@@ -27,6 +27,12 @@ public class ProtecaoTentativasFilter extends OncePerRequestFilter {
             return "login";
         }
 
+        if (path.startsWith("/avaliacoes/comanda/") &&
+                ("GET".equals(method) || "POST".equals(method) ||
+                        "PUT".equals(method) || "DELETE".equals(method))) {
+            return "comanda";
+        }
+
         if (("GET".equals(method) &&
                 (path.startsWith("/comandas/acesso/") ||
                         path.startsWith("/pedidos/comanda/"))) ||
@@ -63,6 +69,15 @@ public class ProtecaoTentativasFilter extends OncePerRequestFilter {
         }
 
         try {
+            if (request.getServletPath().startsWith("/avaliacoes/comanda/") &&
+                    ("POST".equals(request.getMethod()) ||
+                            "PUT".equals(request.getMethod()) ||
+                            "DELETE".equals(request.getMethod()))) {
+                controle.consumir(
+                        "alteracao-avaliacao:ip:" + request.getRemoteAddr(),
+                        120
+                );
+            }
             if ("POST".equals(request.getMethod()) &&
                     "/pedidos".equals(request.getServletPath())) {
                 controle.consumir(

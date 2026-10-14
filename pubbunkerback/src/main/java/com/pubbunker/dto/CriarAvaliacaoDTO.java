@@ -27,4 +27,10 @@ public class CriarAvaliacaoDTO {
             message = "O comentário deve possuir no máximo 255 caracteres."
     )
     private String comentario;
+
+    @Size(
+            max = 100,
+            message = "O nome deve possuir no máximo 100 caracteres."
+    )
+    private String nomeCliente;
 }

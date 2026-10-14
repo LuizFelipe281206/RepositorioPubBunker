@@ -18,9 +18,19 @@ public class Avaliacao {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "usuario_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
     private Usuario usuario;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comanda_id")
+    private Comanda comanda;
+
+    @Column(name = "data_abertura_atendimento")
+    private LocalDateTime dataAberturaAtendimento;
+
+    @Column(name = "nome_cliente", length = 100)
+    private String nomeCliente;
 
     @Column(nullable = false)
     private Integer nota;

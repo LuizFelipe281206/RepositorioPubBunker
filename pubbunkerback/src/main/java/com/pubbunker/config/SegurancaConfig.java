@@ -238,6 +238,25 @@ public class SegurancaConfig {
                         .requestMatchers(
                                 "/reservas/**"
                         ).hasAnyRole("ADMIN", "FUNCIONARIO")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/avaliacoes/comanda/{codigoAcesso}"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/avaliacoes/comanda/{codigoAcesso}"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/avaliacoes/comanda/{codigoAcesso}/{id}"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/avaliacoes/comanda/{codigoAcesso}/{id}"
+                        ).permitAll()
 
                         .requestMatchers(
                                 HttpMethod.GET,

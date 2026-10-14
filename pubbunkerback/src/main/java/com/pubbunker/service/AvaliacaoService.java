@@ -6,17 +6,19 @@ import com.pubbunker.enums.Role;
 import com.pubbunker.exception.RecursoNaoEncontradoException;
 import com.pubbunker.exception.RegraNegocioException;
 import com.pubbunker.model.Avaliacao;
+import com.pubbunker.model.Comanda;
 import com.pubbunker.model.Usuario;
 import com.pubbunker.repository.AvaliacaoRepository;
 import com.pubbunker.repository.UsuarioRepository;
+import com.pubbunker.security.ControleTentativas;
+import com.pubbunker.security.IdentidadeUsuario;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import com.pubbunker.security.IdentidadeUsuario;
-import org.springframework.security.access.AccessDeniedException;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +28,8 @@ public class AvaliacaoService {
     private final IdentidadeUsuario identidadeUsuario;
     private final AvaliacaoRepository avaliacaoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ComandaService comandaService;
+    private final ControleTentativas controleTentativas;
 
     @Transactional(readOnly = true)
     public List<Avaliacao> listarTodas() {
@@ -36,14 +40,12 @@ public class AvaliacaoService {
     @Transactional(readOnly = true)
     public List<Avaliacao> listarPorUsuario(Long usuarioId) {
         identidadeUsuario.exigirProprioUsuarioOuAdmin(usuarioId);
+
         usuarioRepository
                 .findByIdAndDeletedAtIsNull(usuarioId)
-                .orElseThrow(
-                        () -> new RecursoNaoEncontradoException(
-                                "Usuário não encontrado com id: "
-                                        + usuarioId
-                        )
-                );
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Usuário não encontrado com id: " + usuarioId
+                ));
 
         return avaliacaoRepository
                 .findByUsuario_IdAndDeletedAtIsNullOrderByDataHoraDesc(
@@ -55,14 +57,14 @@ public class AvaliacaoService {
     public Avaliacao buscarPorId(Long id) {
         Avaliacao avaliacao = avaliacaoRepository
                 .findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(
-                        () -> new RecursoNaoEncontradoException(
-                                "Avaliação não encontrada com id: " + id
-                        )
-                );
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Avaliação não encontrada com id: " + id
+                ));
 
         identidadeUsuario.exigirProprioUsuarioOuAdmin(
-                avaliacao.getUsuario().getId()
+                avaliacao.getUsuario() == null
+                        ? null
+                        : avaliacao.getUsuario().getId()
         );
 
         return avaliacao;
@@ -70,14 +72,12 @@ public class AvaliacaoService {
 
     public Avaliacao criar(CriarAvaliacaoDTO dto) {
         Long usuarioId = identidadeUsuario.cliente().id();
+
         Usuario usuario = usuarioRepository
                 .findByIdAndDeletedAtIsNull(usuarioId)
-                .orElseThrow(
-                        () -> new RecursoNaoEncontradoException(
-                                "Usuário não encontrado com id: "
-                                        + usuarioId
-                        )
-                );
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Usuário não encontrado com id: " + usuarioId
+                ));
 
         if (usuario.getRole() != Role.CLIENTE) {
             throw new RegraNegocioException(
@@ -86,30 +86,19 @@ public class AvaliacaoService {
         }
 
         Avaliacao avaliacao = new Avaliacao();
-
         avaliacao.setUsuario(usuario);
         avaliacao.setNota(dto.getNota());
-        avaliacao.setComentario(
-                dto.getComentario() == null
-                        ? ""
-                        : dto.getComentario().trim()
-        );
+        avaliacao.setComentario(normalizarComentario(dto.getComentario()));
+
         return avaliacaoRepository.save(avaliacao);
     }
 
-    public Avaliacao atualizar(
-            Long id,
-            AtualizarAvaliacaoDTO dto
-    ) {
+    public Avaliacao atualizar(Long id, AtualizarAvaliacaoDTO dto) {
         Avaliacao avaliacao = buscarPorId(id);
         validarAutor(avaliacao);
 
         avaliacao.setNota(dto.getNota());
-        avaliacao.setComentario(
-                dto.getComentario() == null
-                        ? ""
-                        : dto.getComentario().trim()
-        );
+        avaliacao.setComentario(normalizarComentario(dto.getComentario()));
 
         return avaliacaoRepository.save(avaliacao);
     }
@@ -119,14 +108,89 @@ public class AvaliacaoService {
         validarAutor(avaliacao);
 
         avaliacao.setDeletedAt(LocalDateTime.now());
-
         avaliacaoRepository.save(avaliacao);
+    }
+
+    public List<Avaliacao> listarPorComanda(String codigoAcesso) {
+        Comanda comanda = comandaService.buscarAtivaPorCodigo(codigoAcesso);
+
+        return avaliacaoRepository
+                .findByComanda_IdAndDataAberturaAtendimentoAndDeletedAtIsNullOrderByDataHoraDesc(
+                        comanda.getId(),
+                        comanda.getDataAbertura()
+                );
+    }
+
+    public Avaliacao criarPorComanda(
+            String codigoAcesso,
+            CriarAvaliacaoDTO dto
+    ) {
+        Comanda comanda = comandaService.buscarAtivaPorCodigo(codigoAcesso);
+
+        controleTentativas.consumir(
+                "envio-avaliacao:atendimento:" + comanda.getId()
+                        + ":" + comanda.getDataAbertura(),
+                10
+        );
+
+        Avaliacao avaliacao = new Avaliacao();
+        avaliacao.setComanda(comanda);
+        avaliacao.setDataAberturaAtendimento(comanda.getDataAbertura());
+        avaliacao.setNomeCliente(normalizarNome(dto.getNomeCliente()));
+        avaliacao.setNota(dto.getNota());
+        avaliacao.setComentario(normalizarComentario(dto.getComentario()));
+
+        return avaliacaoRepository.save(avaliacao);
+    }
+
+    public Avaliacao atualizarPorComanda(
+            String codigoAcesso,
+            Long id,
+            AtualizarAvaliacaoDTO dto
+    ) {
+        Comanda comanda = comandaService.buscarAtivaPorCodigo(codigoAcesso);
+        Avaliacao avaliacao = buscarDoAtendimento(comanda, id);
+
+        avaliacao.setNomeCliente(normalizarNome(dto.getNomeCliente()));
+        avaliacao.setNota(dto.getNota());
+        avaliacao.setComentario(normalizarComentario(dto.getComentario()));
+
+        return avaliacaoRepository.save(avaliacao);
+    }
+
+    public void deletarPorComanda(String codigoAcesso, Long id) {
+        Comanda comanda = comandaService.buscarAtivaPorCodigo(codigoAcesso);
+        Avaliacao avaliacao = buscarDoAtendimento(comanda, id);
+
+        avaliacao.setDeletedAt(LocalDateTime.now());
+        avaliacaoRepository.save(avaliacao);
+    }
+
+    private Avaliacao buscarDoAtendimento(Comanda comanda, Long id) {
+        return avaliacaoRepository
+                .findByIdAndComanda_IdAndDataAberturaAtendimentoAndDeletedAtIsNull(
+                        id,
+                        comanda.getId(),
+                        comanda.getDataAbertura()
+                )
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Avaliação não encontrada neste atendimento."
+                ));
+    }
+
+    private String normalizarNome(String nome) {
+        return nome == null || nome.isBlank() ? null : nome.trim();
+    }
+
+    private String normalizarComentario(String comentario) {
+        return comentario == null ? "" : comentario.trim();
     }
 
     private void validarAutor(Avaliacao avaliacao) {
         Long usuarioId = identidadeUsuario.cliente().id();
 
-        if (!usuarioId.equals(avaliacao.getUsuario().getId())) {
+        if (avaliacao.getUsuario() == null
+                || !usuarioId.equals(avaliacao.getUsuario().getId())) {
             throw new AccessDeniedException("Operação não permitida.");
         }
     }
