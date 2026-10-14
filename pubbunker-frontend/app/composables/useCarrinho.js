@@ -130,9 +130,10 @@ export const useCarrinho = () => {
 
             abrirPopup(
                 'Erro',
-                erro.response?.data?.mensagem ||
-                    'Não foi possível finalizar o pedido.',
-                'erro'
+            erro.response?.data?.mensagem ||
+                'Não foi possível finalizar o pedido.',
+                'erro',
+            erro.response?.status === 429 ? 60 : null
             )
 
             return null
