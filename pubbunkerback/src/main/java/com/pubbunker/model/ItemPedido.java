@@ -4,10 +4,13 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.util.LinkedHashSet;
-import java.util.Set;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "itens_pedido")
@@ -27,6 +30,13 @@ public class ItemPedido {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "produto_id", nullable = false)
     private Produto produto;
+
+    @Column(
+            name = "produto_nome",
+            nullable = false,
+            length = 255
+    )
+    private String produtoNome;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -48,8 +58,7 @@ public class ItemPedido {
             }
     )
     @OrderBy("nome ASC")
-    private Set<Adicional> adicionais =
-            new LinkedHashSet<>();
+    private Set<Adicional> adicionais = new LinkedHashSet<>();
 
     @ElementCollection
     @CollectionTable(
@@ -57,8 +66,8 @@ public class ItemPedido {
             joinColumns = @JoinColumn(name = "item_pedido_id")
     )
     @OrderColumn(name = "posicao")
-    private java.util.List<AdicionalPedidoSnapshot> adicionaisSnapshot =
-            new java.util.ArrayList<>();
+    private List<AdicionalPedidoSnapshot> adicionaisSnapshot =
+            new ArrayList<>();
 
     @Column(nullable = false)
     private Integer quantidade;

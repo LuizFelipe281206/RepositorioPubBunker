@@ -2,13 +2,16 @@ package com.pubbunker.service;
 
 import com.pubbunker.dto.SalvarProdutoDTO;
 import com.pubbunker.exception.RecursoNaoEncontradoException;
+import com.pubbunker.exception.RegraNegocioException;
 import com.pubbunker.model.Adicional;
 import com.pubbunker.model.Produto;
 import com.pubbunker.repository.ProdutoRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.pubbunker.exception.RegraNegocioException;
+
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,6 +20,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional
 public class ProdutoService {
+
+    private static final String INDICE_NOME =
+            "uk_produto_nome_nao_excluido";
 
     private final ProdutoRepository repository;
     private final AdicionalService adicionalService;
@@ -30,42 +36,27 @@ public class ProdutoService {
     public Produto buscarPorId(Long id) {
         return repository
                 .findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(
-                        () ->
-                                new RecursoNaoEncontradoException(
-                                        "Produto não encontrado com id: "
-                                                + id
-                                )
+                .orElseThrow(() ->
+                        new RecursoNaoEncontradoException(
+                                "Produto não encontrado com id: " + id
+                        )
                 );
     }
 
-    public Produto salvar(
-            SalvarProdutoDTO dto
-    ) {
+    public Produto salvar(SalvarProdutoDTO dto) {
         Produto produto = new Produto();
 
-        aplicarDados(
-                produto,
-                dto,
-                true
-        );
+        aplicarDados(produto, dto, true);
 
-        return repository.save(produto);
+        return salvarNoBanco(produto);
     }
 
-    public Produto atualizar(
-            Long id,
-            SalvarProdutoDTO dto
-    ) {
+    public Produto atualizar(Long id, SalvarProdutoDTO dto) {
         Produto produto = buscarPorId(id);
 
-        aplicarDados(
-                produto,
-                dto,
-                false
-        );
+        aplicarDados(produto, dto, false);
 
-        return repository.save(produto);
+        return salvarNoBanco(produto);
     }
 
     private void aplicarDados(
@@ -73,22 +64,27 @@ public class ProdutoService {
             SalvarProdutoDTO dto,
             boolean novoProduto
     ) {
-        produto.setNome(dto.getNome().trim());
+        String nome = dto.getNome()
+                .trim()
+                .replaceAll("\\s+", " ");
 
-        produto.setDescricao(
-                dto.getDescricao().trim()
-        );
+        if (repository.existeOutroProdutoComNome(
+                nome,
+                produto.getId()
+        )) {
+            throw new RegraNegocioException(
+                    "Já existe um produto com este nome."
+            );
+        }
 
+        produto.setNome(nome);
+        produto.setDescricao(dto.getDescricao().trim());
         produto.setPreco(dto.getPreco());
-
-        produto.setCategoria(
-                dto.getCategoria().trim()
-        );
+        produto.setCategoria(dto.getCategoria().trim());
 
         if (novoProduto) {
             produto.setAtivo(
-                    dto.getAtivo() == null ||
-                            dto.getAtivo()
+                    dto.getAtivo() == null || dto.getAtivo()
             );
         } else if (dto.getAtivo() != null) {
             produto.setAtivo(dto.getAtivo());
@@ -102,6 +98,39 @@ public class ProdutoService {
         produto.setAdicionaisDisponiveis(
                 new LinkedHashSet<>(adicionais)
         );
+    }
+
+    private Produto salvarNoBanco(Produto produto) {
+        try {
+            return repository.saveAndFlush(produto);
+        } catch (DataIntegrityViolationException exception) {
+            if (violouNomeUnico(exception)) {
+                throw new RegraNegocioException(
+                        "Já existe um produto com este nome."
+                );
+            }
+
+            throw exception;
+        }
+    }
+
+    private boolean violouNomeUnico(Throwable exception) {
+        for (
+                Throwable causa = exception;
+                causa != null;
+                causa = causa.getCause()
+        ) {
+            if (
+                    causa instanceof ConstraintViolationException violacao
+                            && INDICE_NOME.equals(
+                            violacao.getConstraintName()
+                    )
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void deletar(Long id) {

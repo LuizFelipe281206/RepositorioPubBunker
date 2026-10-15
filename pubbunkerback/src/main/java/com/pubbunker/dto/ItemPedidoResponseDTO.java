@@ -15,28 +15,22 @@ public class ItemPedidoResponseDTO {
     private final Integer quantidade;
     private final BigDecimal precoUnitario;
     private final BigDecimal subtotal;
+    private final List<AdicionalPedidoResponseDTO> adicionais;
 
-    private final List<AdicionalPedidoResponseDTO>
-            adicionais;
-
-    public ItemPedidoResponseDTO(
-            ItemPedido item
-    ) {
+    public ItemPedidoResponseDTO(ItemPedido item) {
         this.id = item.getId();
         this.produtoId = item.getProduto().getId();
-        this.produtoNome =
-                item.getProduto().getNome();
-
+        this.produtoNome = item.getProdutoNome();
         this.quantidade = item.getQuantidade();
-        this.precoUnitario =
-                item.getPrecoUnitario();
-
+        this.precoUnitario = item.getPrecoUnitario();
         this.subtotal = item.getSubtotal();
 
         this.adicionais = item.getAdicionaisSnapshot().isEmpty()
                 ? item.getAdicionais().stream()
-                .map(AdicionalPedidoResponseDTO::new).toList()
+                .map(AdicionalPedidoResponseDTO::new)
+                .toList()
                 : item.getAdicionaisSnapshot().stream()
-                .map(AdicionalPedidoResponseDTO::new).toList();
+                .map(AdicionalPedidoResponseDTO::new)
+                .toList();
     }
 }

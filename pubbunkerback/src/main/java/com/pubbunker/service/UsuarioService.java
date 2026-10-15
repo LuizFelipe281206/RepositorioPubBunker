@@ -63,9 +63,12 @@ public class UsuarioService {
 
             int tamanho = senha.codePointCount(0, senha.length());
 
-            if (tamanho < 15 || tamanho > 128) {
+            if (tamanho < 8 || senha.length() > 128
+                    || !senha.matches("(?s).*[0-9].*")
+                    || !senha.matches("(?s).*[\\p{P}\\p{S}].*")) {
                 throw new RegraNegocioException(
-                        "A nova senha deve ter entre 15 e 128 caracteres."
+                        "A senha deve ter entre 8 e 128 caracteres, "
+                                + "incluindo pelo menos um número e um caractere especial."
                 );
             }
 

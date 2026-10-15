@@ -292,6 +292,11 @@ public class SegurancaConfig {
                                 "/avaliacoes/**"
                         ).hasRole("CLIENTE")
 
+                        .requestMatchers(
+                                "/funcionarios",
+                                "/funcionarios/**"
+                        ).hasRole("ADMIN")
+
                         .anyRequest().denyAll()
                 )
 

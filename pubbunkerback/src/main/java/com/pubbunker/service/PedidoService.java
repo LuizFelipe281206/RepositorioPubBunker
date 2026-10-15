@@ -169,6 +169,7 @@ public class PedidoService {
 
             ItemPedido item = new ItemPedido();
             item.setProduto(produto);
+            item.setProdutoNome(produto.getNome());
             item.setQuantidade(quantidade);
             item.setPrecoUnitario(precoUnitario);
             item.setSubtotal(subtotal);
