@@ -188,7 +188,7 @@ public class PedidoService {
     }
 
     public Pedido atualizarStatus(Long id, AtualizarStatusDTO dto) {
-        Pedido pedido = buscarPorId(id);
+        Pedido pedido = buscarParaAtualizacao(id);
 
         if (dto.getStatus() == null) {
             throw new RegraNegocioException(
@@ -204,7 +204,7 @@ public class PedidoService {
     }
 
     public void deletar(Long id) {
-        Pedido pedido = buscarPorId(id);
+        Pedido pedido = buscarParaAtualizacao(id);
 
         if (pedido.getStatus() != StatusPedido.CONCLUIDO) {
             throw new RegraNegocioException(
@@ -220,6 +220,14 @@ public class PedidoService {
         );
 
         pedidoRepository.save(pedido);
+    }
+
+    private Pedido buscarParaAtualizacao(Long id) {
+        return pedidoRepository
+                .buscarParaAtualizacao(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Pedido não encontrado com id: " + id
+                ));
     }
 
     private void validarTransicaoStatus(
