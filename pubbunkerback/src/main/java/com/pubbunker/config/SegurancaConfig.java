@@ -259,6 +259,26 @@ public class SegurancaConfig {
                         ).permitAll()
 
                         .requestMatchers(
+                                HttpMethod.POST,
+                                "/avaliacoes"
+                        ).denyAll()
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/avaliacoes/arquivadas"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/avaliacoes/{id}/arquivar"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/avaliacoes/arquivadas/{id}"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
                                 HttpMethod.GET,
                                 "/avaliacoes"
                         ).hasRole("ADMIN")

@@ -33,8 +33,58 @@ public class AvaliacaoService {
 
     @Transactional(readOnly = true)
     public List<Avaliacao> listarTodas() {
+        exigirAdmin();
+
         return avaliacaoRepository
-                .findByDeletedAtIsNullOrderByDataHoraDesc();
+                .findByDeletedAtIsNullAndArquivadoEmIsNullOrderByDataHoraDesc();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Avaliacao> listarArquivadas() {
+        exigirAdmin();
+
+        return avaliacaoRepository
+                .findByDeletedAtIsNullAndArquivadoEmIsNotNullOrderByDataHoraDesc();
+    }
+
+    public void arquivar(Long id) {
+        exigirAdmin();
+
+        Avaliacao avaliacao = avaliacaoRepository
+                .findByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Avaliação não encontrada."
+                ));
+
+        if (avaliacao.getArquivadoEm() == null) {
+            avaliacao.setArquivadoEm(LocalDateTime.now());
+            avaliacaoRepository.save(avaliacao);
+        }
+    }
+
+    public void excluirArquivada(Long id) {
+        exigirAdmin();
+
+        Avaliacao avaliacao = avaliacaoRepository
+                .findByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Avaliação não encontrada."
+                ));
+
+        if (avaliacao.getArquivadoEm() == null) {
+            throw new RegraNegocioException(
+                    "Arquive a avaliação antes de excluí-la."
+            );
+        }
+
+        avaliacao.setDeletedAt(LocalDateTime.now());
+        avaliacaoRepository.save(avaliacao);
+    }
+
+    private void exigirAdmin() {
+        if (identidadeUsuario.atual().role() != Role.ADMIN) {
+            throw new AccessDeniedException("Operação não permitida.");
+        }
     }
 
     @Transactional(readOnly = true)

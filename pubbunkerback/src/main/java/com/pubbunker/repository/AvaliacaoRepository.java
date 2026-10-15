@@ -36,4 +36,12 @@ public interface AvaliacaoRepository
             Long comandaId,
             LocalDateTime dataAberturaAtendimento
     );
+
+    @EntityGraph(attributePaths = {"usuario", "comanda"})
+    List<Avaliacao>
+    findByDeletedAtIsNullAndArquivadoEmIsNullOrderByDataHoraDesc();
+
+    @EntityGraph(attributePaths = {"usuario", "comanda"})
+    List<Avaliacao>
+    findByDeletedAtIsNullAndArquivadoEmIsNotNullOrderByDataHoraDesc();
 }

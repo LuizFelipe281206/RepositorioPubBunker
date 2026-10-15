@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE comandas
+DROP COLUMN IF EXISTS codigo_qr;
+
+COMMIT;

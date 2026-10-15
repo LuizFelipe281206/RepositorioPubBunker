@@ -6,13 +6,18 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
 @Table(name = "avaliacoes")
 @Getter
 @Setter
 @NoArgsConstructor
+@DynamicUpdate
 public class Avaliacao {
+
+    @Column(name = "arquivado_em")
+    private LocalDateTime arquivadoEm;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

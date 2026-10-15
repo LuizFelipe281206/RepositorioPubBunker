@@ -103,4 +103,24 @@ public class AvaliacaoController {
     public void deletar(@PathVariable Long id) {
         service.deletar(id);
     }
+
+    @DeleteMapping("/arquivadas/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void excluirArquivada(@PathVariable Long id) {
+        service.excluirArquivada(id);
+    }
+
+    @GetMapping("/arquivadas")
+    public List<AvaliacaoResponseDTO> listarArquivadas() {
+        return service.listarArquivadas()
+                .stream()
+                .map(AvaliacaoResponseDTO::new)
+                .toList();
+    }
+
+    @PatchMapping("/{id}/arquivar")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void arquivar(@PathVariable Long id) {
+        service.arquivar(id);
+    }
 }
