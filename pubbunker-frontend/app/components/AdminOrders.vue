@@ -2,66 +2,143 @@
 const {
   pedidos,
   carregandoPedidos,
+  processandoPedidos,
+  pedidoProcessandoId,
+  erroPedidos,
   carregarPedidos,
   atualizarStatus,
   fecharPedido
 } = usePedidos()
 
+const statusSelecionado = ref('PENDENTE')
 const pedidoParaArquivar = ref(null)
 const confirmacaoPedidoVisivel = ref(false)
-const arquivandoPedido = ref(false)
+const consultaEmAndamento = ref(false)
 
-const solicitarArquivamento = (pedido) => {
-  if (arquivandoPedido.value || pedido.status !== 'CONCLUIDO') return
-
-  pedidoParaArquivar.value = pedido
-  confirmacaoPedidoVisivel.value = true
-}
-
-const confirmarArquivamento = async () => {
-  if (!pedidoParaArquivar.value || arquivandoPedido.value) return
-
-  arquivandoPedido.value = true
-
-  try {
-    const arquivado = await fecharPedido(pedidoParaArquivar.value)
-
-    if (arquivado) {
-      confirmacaoPedidoVisivel.value = false
-    }
-  } finally {
-    arquivandoPedido.value = false
+const opcoesStatus = [
+  {
+    valor: 'PENDENTE',
+    titulo: 'Pendentes',
+    etiqueta: 'Pendente',
+    severity: 'warn',
+    vazio: 'Nenhum pedido pendente.'
+  },
+  {
+    valor: 'EM_PREPARO',
+    titulo: 'Em preparo',
+    etiqueta: 'Em preparo',
+    severity: 'info',
+    vazio: 'Nenhum pedido em preparo.'
+  },
+  {
+    valor: 'CONCLUIDO',
+    titulo: 'Concluídos',
+    etiqueta: 'Concluído',
+    severity: 'success',
+    vazio: 'Nenhum pedido concluído.'
   }
-}
+]
 
-let intervaloAtualizacao = null
-let consultaEmAndamento = false
+const opcaoAtual = computed(() =>
+  opcoesStatus.find(opcao => opcao.valor === statusSelecionado.value) ||
+  opcoesStatus[0]
+)
+
+const contagens = computed(() =>
+  Object.fromEntries(opcoesStatus.map(opcao => [
+    opcao.valor,
+    pedidos.value.filter(pedido => pedido.status === opcao.valor).length
+  ]))
+)
+
+const pedidosFiltrados = computed(() =>
+  pedidos.value.filter(pedido => pedido.status === opcaoAtual.value.valor)
+)
+
+const ocupado = computed(() =>
+  consultaEmAndamento.value || processandoPedidos.value
+)
+
+const selecionarStatus = status => {
+  if (
+    processandoPedidos.value || confirmacaoPedidoVisivel.value ||
+    !opcoesStatus.some(opcao => opcao.valor === status)
+  ) return
+
+  statusSelecionado.value = status
+}
 
 const atualizarPedidos = async (silencioso = false) => {
-  if (consultaEmAndamento) return
-
-  consultaEmAndamento = true
+  if (ocupado.value || confirmacaoPedidoVisivel.value) return
+  consultaEmAndamento.value = true
 
   try {
     await carregarPedidos(silencioso)
   } finally {
-    consultaEmAndamento = false
+    consultaEmAndamento.value = false
   }
 }
 
+const mudarStatus = async (pedido, status) => {
+  if (ocupado.value || confirmacaoPedidoVisivel.value) return
+  await atualizarStatus(pedido.id, status)
+}
+
+const fecharConfirmacao = () => {
+  if (processandoPedidos.value) return
+  confirmacaoPedidoVisivel.value = false
+  pedidoParaArquivar.value = null
+}
+
+const solicitarArquivamento = pedido => {
+  if (ocupado.value || confirmacaoPedidoVisivel.value) return
+
+  const atual = pedidos.value.find(item => item.id === pedido.id)
+  if (!atual || atual.status !== 'CONCLUIDO') return
+
+  pedidoParaArquivar.value = { id: atual.id }
+  confirmacaoPedidoVisivel.value = true
+}
+
+const confirmarArquivamento = async () => {
+  if (ocupado.value || !pedidoParaArquivar.value) return
+
+  const atual = pedidos.value.find(
+    item => item.id === pedidoParaArquivar.value.id
+  )
+
+  if (!atual || atual.status !== 'CONCLUIDO') {
+    fecharConfirmacao()
+    return
+  }
+
+  if (await fecharPedido(atual)) fecharConfirmacao()
+}
+
+watch(pedidos, () => {
+  if (
+    pedidoParaArquivar.value &&
+    !pedidos.value.some(item =>
+      item.id === pedidoParaArquivar.value.id &&
+      item.status === 'CONCLUIDO'
+    )
+  ) {
+    confirmacaoPedidoVisivel.value = false
+    pedidoParaArquivar.value = null
+  }
+}, { flush: 'sync' })
+
+let intervaloAtualizacao = null
+
 onMounted(() => {
   atualizarPedidos()
-
-  intervaloAtualizacao = setInterval(
-    () => atualizarPedidos(true),
-    5000
-  )
+  intervaloAtualizacao = setInterval(() => atualizarPedidos(true), 5000)
 })
 
 onBeforeUnmount(() => {
-  if (intervaloAtualizacao) {
-    clearInterval(intervaloAtualizacao)
-  }
+  clearInterval(intervaloAtualizacao)
+  confirmacaoPedidoVisivel.value = false
+  pedidoParaArquivar.value = null
 })
 
 const formatarPreco = valor =>
@@ -70,31 +147,60 @@ const formatarPreco = valor =>
     currency: 'BRL'
   })
 
-const formatarData = valor => {
-  if (!valor) {
-    return ''
-  }
-
-  return new Date(valor).toLocaleString('pt-BR')
-}
+const formatarData = valor =>
+  valor ? new Date(valor).toLocaleString('pt-BR') : ''
 </script>
 
 <template>
   <section>
-    <h2>Pedidos recebidos</h2>
+    <div class="cabecalho-pedidos">
+      <div>
+        <h2>Pedidos recebidos</h2>
+        <p class="texto-secundario">
+          Total no painel: {{ pedidos.length }}.
+          Atualização automática a cada 5 segundos.
+        </p>
+      </div>
 
-    <p
-      v-if="pedidos.length === 0"
-      class="texto-secundario"
-    >
-      Nenhum pedido recebido.
+      <Button
+        label="Atualizar"
+        icon="pi pi-refresh"
+        severity="secondary"
+        :loading="carregandoPedidos"
+        :disabled="ocupado || confirmacaoPedidoVisivel"
+        @click="atualizarPedidos()"
+      />
+    </div>
+
+    <div class="filtros-pedidos" role="group" aria-label="Filtrar pedidos por status">
+      <button
+        v-for="opcao in opcoesStatus"
+        :key="opcao.valor"
+        type="button"
+        class="filtro-pedido"
+        :class="{ 'filtro-pedido-ativo': statusSelecionado === opcao.valor }"
+        :aria-pressed="statusSelecionado === opcao.valor"
+        :disabled="processandoPedidos || confirmacaoPedidoVisivel"
+        @click="selecionarStatus(opcao.valor)"
+      >
+        <span>{{ opcao.titulo }}</span>
+        <span class="contador-status">{{ contagens[opcao.valor] }}</span>
+      </button>
+    </div>
+
+    <p v-if="erroPedidos" class="erro-pedidos" role="alert">
+      {{ erroPedidos }}
     </p>
 
-    <div class="grade-pedidos">
-      <Card
-        v-for="pedido in pedidos"
-        :key="pedido.id"
-      >
+    <p v-if="carregandoPedidos && !pedidos.length" class="texto-secundario">
+      Carregando pedidos...
+    </p>
+    <p v-else-if="!pedidosFiltrados.length && !erroPedidos" class="texto-secundario">
+      {{ opcaoAtual.vazio }}
+    </p>
+
+    <div v-else class="grade-pedidos" :aria-busy="carregandoPedidos">
+      <Card v-for="pedido in pedidosFiltrados" :key="pedido.id" class="pedido-card">
         <template #title>
           <span v-if="pedido.numeroComanda">
             Comanda {{ pedido.numeroComanda }}
@@ -172,66 +278,145 @@ const formatarData = valor => {
 
         <template #footer>
           <div class="acoes-card">
+            <Tag :value="opcaoAtual.etiqueta" :severity="opcaoAtual.severity" />
+
             <Button
+              v-if="pedido.status === 'PENDENTE'"
               label="Em preparo"
               severity="warn"
-              :disabled="pedido.status !== 'PENDENTE'"
-              @click="atualizarStatus(pedido.id, 'EM_PREPARO')"
+              :loading="processandoPedidos && pedidoProcessandoId === pedido.id"
+              :disabled="ocupado || confirmacaoPedidoVisivel"
+              @click="mudarStatus(pedido, 'EM_PREPARO')"
             />
 
             <Button
+              v-else-if="pedido.status === 'EM_PREPARO'"
               label="Concluir"
               severity="success"
-              :disabled="pedido.status !== 'EM_PREPARO'"
-              @click="atualizarStatus(pedido.id, 'CONCLUIDO')"
+              :loading="processandoPedidos && pedidoProcessandoId === pedido.id"
+              :disabled="ocupado || confirmacaoPedidoVisivel"
+              @click="mudarStatus(pedido, 'CONCLUIDO')"
             />
 
             <Button
+              v-else-if="pedido.status === 'CONCLUIDO'"
               label="Arquivar"
               severity="secondary"
-              :disabled="pedido.status !== 'CONCLUIDO'"
+              :disabled="ocupado || confirmacaoPedidoVisivel"
               @click="solicitarArquivamento(pedido)"
             />
           </div>
         </template>
       </Card>
     </div>
+
     <Dialog
-  v-model:visible="confirmacaoPedidoVisivel"
-  modal
-  header="Arquivar pedido"
-  :closable="false"
-  :draggable="false"
-  :close-on-escape="!arquivandoPedido"
-  :style="{ width: 'min(92vw, 420px)' }"
-  @after-hide="pedidoParaArquivar = null"
->
-  <p v-if="pedidoParaArquivar">
-    Tem certeza que deseja arquivar o pedido
-    <strong>#{{ pedidoParaArquivar.id }}</strong>?
-  </p>
+      v-model:visible="confirmacaoPedidoVisivel"
+      modal
+      header="Arquivar pedido"
+      :closable="false"
+      :draggable="false"
+      :close-on-escape="!processandoPedidos"
+      :style="{ width: 'min(92vw, 420px)' }"
+      @hide="fecharConfirmacao"
+    >
+      <p v-if="pedidoParaArquivar">
+        Tem certeza que deseja arquivar o pedido
+        <strong>#{{ pedidoParaArquivar.id }}</strong>?
+      </p>
 
-  <p class="texto-secundario">
-    Ele será removido da tela de pedidos recebidos.
-  </p>
+      <p class="texto-secundario">
+        Ele será removido da tela de pedidos recebidos.
+      </p>
 
-  <template #footer>
-    <Button
-      label="Cancelar"
-      severity="secondary"
-      text
-      :disabled="arquivandoPedido"
-      @click="confirmacaoPedidoVisivel = false"
-    />
-
-    <Button
-      label="Arquivar"
-      severity="danger"
-      :loading="arquivandoPedido"
-      :disabled="arquivandoPedido"
-      @click="confirmarArquivamento"
-    />
-  </template>
-</Dialog>
+      <template #footer>
+        <Button
+          label="Cancelar"
+          severity="secondary"
+          text
+          :disabled="processandoPedidos"
+          @click="fecharConfirmacao"
+        />
+        <Button
+          label="Arquivar"
+          severity="danger"
+          :loading="processandoPedidos"
+          :disabled="processandoPedidos"
+          @click="confirmarArquivamento"
+        />
+      </template>
+    </Dialog>
   </section>
 </template>
+
+<style scoped>
+.cabecalho-pedidos {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.cabecalho-pedidos h2 { margin-bottom: 6px; }
+.cabecalho-pedidos p { margin: 0; }
+.filtros-pedidos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.filtro-pedido {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 12px 16px;
+  border: 1px solid var(--bunker-border);
+  border-radius: 8px;
+  background: var(--bunker-card);
+  color: var(--bunker-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.filtro-pedido:not(:disabled):hover {
+  border-color: var(--bunker-wine);
+}
+.filtro-pedido-ativo {
+  border-color: var(--bunker-wine);
+  background: var(--bunker-wine);
+  color: white;
+}
+.filtro-pedido:focus-visible {
+  outline: 3px solid var(--bunker-amber);
+  outline-offset: 2px;
+}
+.filtro-pedido:disabled { cursor: wait; opacity: 0.7; }
+.contador-status {
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0 6px;
+  border-radius: 20px;
+  background: var(--bunker-cream);
+  color: var(--bunker-dark);
+}
+.filtro-pedido-ativo .contador-status {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+.grade-pedidos {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}
+.pedido-card { min-width: 0; }
+.acoes-card { align-items: center; justify-content: space-between; }
+.erro-pedidos { color: var(--bunker-wine); }
+@media (max-width: 600px) {
+  .filtros-pedidos { grid-template-columns: 1fr; }
+}
+</style>
+

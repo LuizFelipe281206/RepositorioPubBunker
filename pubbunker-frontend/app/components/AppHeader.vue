@@ -113,27 +113,36 @@ const paginaAtual = (caminho) =>
           />
 
           <Button
-  v-if="role === 'ADMIN'"
-  label="Cadastros"
-  icon="pi pi-plus-circle"
-  class="botao-navegacao"
-  :class="{
-    'botao-navegacao-ativo': paginaAtual('/admin/cadastros')
-  }"
-  @click="irPara('/admin/cadastros')"
-/>
+            v-if="role === 'ADMIN'"
+            label="Cadastros"
+            icon="pi pi-plus-circle"
+            class="botao-navegacao"
+            :class="{
+              'botao-navegacao-ativo': paginaAtual('/admin/cadastros')
+            }"
+            @click="irPara('/admin/cadastros')"
+          />
 
-<Button
-  v-if="role === 'ADMIN'"
-  label="Avaliações"
-  icon="pi pi-star"
-  class="botao-navegacao"
-  :class="{
-    'botao-navegacao-ativo': paginaAtual('/admin/avaliacoes')
-  }"
-  @click="irPara('/admin/avaliacoes')"
-/>
-
+          <Button
+            v-if="role === 'ADMIN'"
+            label="Avaliações"
+            icon="pi pi-star"
+            class="botao-navegacao"
+            :class="{
+              'botao-navegacao-ativo': paginaAtual('/admin/avaliacoes')
+            }"
+            @click="irPara('/admin/avaliacoes')"
+          />
+          <Button
+            v-if="role === 'ADMIN'"
+            label="Funcionários"
+            icon="pi pi-users"
+            class="botao-navegacao"
+            :class="{
+              'botao-navegacao-ativo': paginaAtual('/admin/funcionarios')
+            }"
+            @click="irPara('/admin/funcionarios')"
+          />
           <Button
             label="Comandas"
             icon="pi pi-qrcode"
