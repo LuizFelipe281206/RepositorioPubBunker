@@ -225,3 +225,32 @@ const dadosStatus = status => {
     </section>
   </main>
 </template>
+
+<style scoped>
+.pedido-cliente-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.pedido-cliente-card :deep(.p-card-body) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.pedido-cliente-card :deep(.p-card-content) {
+  display: flex;
+  flex: 1;
+}
+
+.detalhes-pedido {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.total-pedido {
+  margin-top: auto;
+  padding-top: 18px;
+}
+</style>
