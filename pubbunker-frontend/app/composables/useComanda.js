@@ -4,6 +4,7 @@ export const useComanda = () => {
     const erroComanda = useState('erro-comanda', () => null)
     const comandaAtual = useState('comanda-atual', () => null)
     const carregandoComanda = useState('carregando-comanda', () => false)
+    const versaoAcesso = useState('versao-acesso-comanda', () => 0)
 
     const codigoComanda = computed(
         () => comandaAtual.value?.codigoAcesso || ''
@@ -33,26 +34,36 @@ export const useComanda = () => {
         comandaAtual.value = comanda
 
         if (import.meta.client) {
-            sessionStorage.setItem('comanda', JSON.stringify(comanda))
+            try {
+                sessionStorage.setItem('comanda', JSON.stringify(comanda))
+            } catch {
+                // O atendimento continua na memória se o navegador bloquear o armazenamento.
+            }
         }
     }
 
     const limparComanda = () => {
+        versaoAcesso.value++
+        carregandoComanda.value = false
         limparAtendimento()
         comandaAtual.value = null
 
         if (import.meta.client) {
-            sessionStorage.removeItem('comanda')
+            try {
+                sessionStorage.removeItem('comanda')
+            } catch {
+                // Os dados em memória já foram limpos.
+            }
         }
     }
 
     const restaurarComanda = () => {
         if (import.meta.server || comandaAtual.value) return
 
-        const comandaSalva = sessionStorage.getItem('comanda')
-        if (!comandaSalva) return
-
         try {
+            const comandaSalva = sessionStorage.getItem('comanda')
+            if (!comandaSalva) return
+
             const comanda = JSON.parse(comandaSalva)
 
             if (comanda.status === 'EM_USO') {
@@ -66,6 +77,7 @@ export const useComanda = () => {
     }
 
     const acessarComanda = async (codigoAcesso) => {
+        const versao = ++versaoAcesso.value
         carregandoComanda.value = true
         erroComanda.value = null
 
@@ -74,9 +86,13 @@ export const useComanda = () => {
                 `/comandas/acesso/${encodeURIComponent(codigoAcesso)}`
             )
 
+            if (versao !== versaoAcesso.value) return false
+
             salvarComanda(data)
             return true
         } catch (erro) {
+            if (versao !== versaoAcesso.value) return false
+
             limparComanda()
             erroComanda.value = descreverErroComanda(erro)
 
@@ -89,7 +105,9 @@ export const useComanda = () => {
 
             return false
         } finally {
-            carregandoComanda.value = false
+            if (versao === versaoAcesso.value) {
+                carregandoComanda.value = false
+            }
         }
     }
 
