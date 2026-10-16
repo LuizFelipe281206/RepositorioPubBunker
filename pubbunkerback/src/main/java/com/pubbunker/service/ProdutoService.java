@@ -8,13 +8,19 @@ import com.pubbunker.model.Produto;
 import com.pubbunker.repository.ProdutoRepository;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.exception.ConstraintViolationException;
+import org.postgresql.util.PSQLException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -115,18 +121,47 @@ public class ProdutoService {
     }
 
     private boolean violouNomeUnico(Throwable exception) {
-        for (
-                Throwable causa = exception;
-                causa != null;
-                causa = causa.getCause()
-        ) {
+        Set<Throwable> visitadas = Collections.newSetFromMap(
+                new IdentityHashMap<>()
+        );
+        ArrayDeque<Throwable> pendentes = new ArrayDeque<>();
+        pendentes.add(exception);
+
+        while (!pendentes.isEmpty()) {
+            Throwable causa = pendentes.removeFirst();
+
+            if (!visitadas.add(causa)) {
+                continue;
+            }
+
             if (
                     causa instanceof ConstraintViolationException violacao
+                            && "23505".equals(violacao.getSQLState())
+                            && INDICE_NOME.equals(violacao.getConstraintName())
+            ) {
+                return true;
+            }
+
+            if (
+                    causa instanceof PSQLException postgres
+                            && "23505".equals(postgres.getSQLState())
+                            && postgres.getServerErrorMessage() != null
                             && INDICE_NOME.equals(
-                            violacao.getConstraintName()
+                            postgres.getServerErrorMessage().getConstraint()
                     )
             ) {
                 return true;
+            }
+
+            if (causa.getCause() != null) {
+                pendentes.addLast(causa.getCause());
+            }
+
+            if (
+                    causa instanceof SQLException sql
+                            && sql.getNextException() != null
+            ) {
+                pendentes.addLast(sql.getNextException());
             }
         }
 
