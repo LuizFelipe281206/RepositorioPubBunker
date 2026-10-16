@@ -40,6 +40,13 @@ public class AdicionalService {
                 );
     }
 
+    private Adicional buscarParaAtualizacao(Long id) {
+        return repository.buscarParaAtualizacao(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Adicional não encontrado com id: " + id
+                ));
+    }
+
     @Transactional(readOnly = true)
     public List<Adicional> buscarAtivosPorIds(
             Collection<Long> ids
@@ -86,7 +93,7 @@ public class AdicionalService {
             Long id,
             SalvarAdicionalDTO dto
     ) {
-        Adicional adicional = buscarPorId(id);
+        Adicional adicional = buscarParaAtualizacao(id);
 
         adicional.setNome(dto.getNome().trim());
         adicional.setPreco(dto.getPreco());
@@ -99,7 +106,7 @@ public class AdicionalService {
     }
 
     public void deletar(Long id) {
-        Adicional adicional = buscarPorId(id);
+        Adicional adicional = buscarParaAtualizacao(id);
 
         if (Boolean.TRUE.equals(adicional.getAtivo())) {
             throw new RegraNegocioException(

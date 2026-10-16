@@ -49,6 +49,13 @@ public class ProdutoService {
                 );
     }
 
+    private Produto buscarParaAtualizacao(Long id) {
+        return repository.buscarParaAtualizacao(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Produto não encontrado com id: " + id
+                ));
+    }
+
     public Produto salvar(SalvarProdutoDTO dto) {
         Produto produto = new Produto();
 
@@ -58,7 +65,7 @@ public class ProdutoService {
     }
 
     public Produto atualizar(Long id, SalvarProdutoDTO dto) {
-        Produto produto = buscarPorId(id);
+        Produto produto = buscarParaAtualizacao(id);
 
         aplicarDados(produto, dto, false);
 
@@ -169,7 +176,7 @@ public class ProdutoService {
     }
 
     public void deletar(Long id) {
-        Produto produto = buscarPorId(id);
+        Produto produto = buscarParaAtualizacao(id);
 
         if (Boolean.TRUE.equals(produto.getAtivo())) {
             throw new RegraNegocioException(
@@ -182,3 +189,4 @@ public class ProdutoService {
         repository.save(produto);
     }
 }
+

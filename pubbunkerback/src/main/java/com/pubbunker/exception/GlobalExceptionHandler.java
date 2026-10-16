@@ -2,6 +2,11 @@ package com.pubbunker.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.web.ErrorResponse;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -143,6 +148,32 @@ public class GlobalExceptionHandler {
                 "codigo", "DADOS_INVALIDOS",
                 "mensagem", "Um parâmetro da requisição é inválido ou não foi informado."
         ));
+    }
+
+    @ExceptionHandler({
+            HttpMediaTypeNotSupportedException.class,
+            HttpMediaTypeNotAcceptableException.class,
+            HttpRequestMethodNotSupportedException.class
+    })
+    public ResponseEntity<Map<String, Object>> tratarFormatoOuMetodo(
+            Exception exception
+    ) {
+        ErrorResponse erroHttp = (ErrorResponse) exception;
+        int status = erroHttp.getStatusCode().value();
+        String mensagem = switch (status) {
+            case 405 -> "O método enviado não é permitido para esta operação.";
+            case 406 -> "O formato de resposta solicitado não está disponível.";
+            default -> "Envie os dados no formato JSON.";
+        };
+
+        return ResponseEntity.status(status)
+                .headers(erroHttp.getHeaders())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of(
+                        "status", status,
+                        "codigo", "REQUISICAO_INVALIDA",
+                        "mensagem", mensagem
+                ));
     }
 
     @ExceptionHandler(Exception.class)

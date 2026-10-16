@@ -1,7 +1,9 @@
 package com.pubbunker.repository;
 
 import com.pubbunker.model.Produto;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,6 +16,10 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
     List<Produto> findByDeletedAtIsNull();
 
     Optional<Produto> findByIdAndDeletedAtIsNull(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Produto p where p.id = :id and p.deletedAt is null")
+    Optional<Produto> buscarParaAtualizacao(@Param("id") Long id);
 
     List<Produto> findAllByIdInAndDeletedAtIsNullAndAtivoTrue(
             Collection<Long> ids
