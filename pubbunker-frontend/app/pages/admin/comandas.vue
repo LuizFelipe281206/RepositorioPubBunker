@@ -190,7 +190,7 @@ const confirmarArquivamento = async () => {
   try {
     const arquivada = await arquivarComanda(id)
 
-    if (arquivada) {
+    if (arquivada && comandaParaArquivar.value?.id === id) {
       cancelarArquivamento()
     }
   } finally {

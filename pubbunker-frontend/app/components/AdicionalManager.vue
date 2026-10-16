@@ -132,10 +132,11 @@ const confirmarExclusao = async () => {
     return
   }
 
+  const id = adicionalParaExcluir.value.id
   excluindo.value = true
 
   try {
-    await excluirAdicional(adicionalParaExcluir.value.id)
+    await excluirAdicional(id)
 
     abrirPopup(
       'Adicional arquivado',
@@ -143,12 +144,14 @@ const confirmarExclusao = async () => {
     )
 
     if (
-      adicionalEditandoId.value === adicionalParaExcluir.value.id
+      adicionalEditandoId.value === id
     ) {
       limparFormulario()
     }
 
-    cancelarExclusao()
+    if (adicionalParaExcluir.value?.id === id) {
+      cancelarExclusao()
+    }
   } catch (erro) {
     abrirPopup(
       'Erro',
