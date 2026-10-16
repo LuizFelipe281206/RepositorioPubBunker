@@ -45,6 +45,14 @@ public class ReservaService {
                 );
     }
 
+    private Reserva buscarParaAtualizacao(Long id) {
+        return reservaRepository
+                .buscarParaAtualizacao(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Reserva não encontrada com id: " + id
+                ));
+    }
+
     @Transactional(readOnly = true)
     public List<Reserva> listarPorStatus(
             StatusReserva status
@@ -113,7 +121,7 @@ public class ReservaService {
             Long id,
             AtualizarReservaDTO dto
     ) {
-        Reserva reserva = buscarPorId(id);
+        Reserva reserva = buscarParaAtualizacao(id);
 
         validarReservaEditavel(reserva);
 
@@ -132,7 +140,7 @@ public class ReservaService {
             Long id,
             AtualizarStatusReservaDTO dto
     ) {
-        Reserva reserva = buscarPorId(id);
+        Reserva reserva = buscarParaAtualizacao(id);
         StatusReserva statusAtual = reserva.getStatus();
         StatusReserva novoStatus = dto.getStatus();
 
@@ -156,7 +164,7 @@ public class ReservaService {
     }
 
     public Reserva cancelar(Long id) {
-        Reserva reserva = buscarPorId(id);
+        Reserva reserva = buscarParaAtualizacao(id);
 
         if (
                 reserva.getStatus() == StatusReserva.CONCLUIDA ||
@@ -173,7 +181,7 @@ public class ReservaService {
     }
 
     public void deletar(Long id) {
-        Reserva reserva = buscarPorId(id);
+        Reserva reserva = buscarParaAtualizacao(id);
         StatusReserva status = reserva.getStatus();
 
         if (
