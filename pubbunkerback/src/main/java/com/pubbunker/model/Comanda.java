@@ -1,6 +1,7 @@
 package com.pubbunker.model;
 
 import com.pubbunker.enums.StatusComanda;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,6 +41,14 @@ public class Comanda {
             length = 36
     )
     private String codigoAcesso;
+
+    @JsonIgnore
+    @Column(name = "codigo_entrada", length = 5)
+    private String codigoEntrada;
+
+    @JsonIgnore
+    @Column(name = "primeiro_acesso_realizado", nullable = false)
+    private Boolean primeiroAcessoRealizado = false;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

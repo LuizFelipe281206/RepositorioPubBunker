@@ -1,8 +1,11 @@
 package com.pubbunker.controller;
 
 import com.pubbunker.dto.ComandaResponseDTO;
+import com.pubbunker.dto.AcessarComandaDTO;
 import com.pubbunker.dto.CriarComandaDTO;
 import com.pubbunker.service.ComandaService;
+import com.pubbunker.security.AcessoComandaSessao;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,12 +19,13 @@ import java.util.List;
 public class ComandaController {
 
     private final ComandaService service;
+    private final AcessoComandaSessao acessoSessao;
 
     @GetMapping
     public List<ComandaResponseDTO> listarTodas() {
         return service.listarTodas()
                 .stream()
-                .map(ComandaResponseDTO::new)
+                .map(comanda -> new ComandaResponseDTO(comanda, true))
                 .toList();
     }
 
@@ -30,7 +34,7 @@ public class ComandaController {
             @PathVariable Long id
     ) {
         return new ComandaResponseDTO(
-                service.buscarPorId(id)
+                service.buscarPorId(id), true
         );
     }
 
@@ -51,7 +55,7 @@ public class ComandaController {
             @Valid @RequestBody CriarComandaDTO dto
     ) {
         return new ComandaResponseDTO(
-                service.criar(dto)
+                service.criar(dto), true
         );
     }
 
@@ -60,7 +64,7 @@ public class ComandaController {
             @PathVariable Long id
     ) {
         return new ComandaResponseDTO(
-                service.abrir(id)
+                service.abrir(id), true
         );
     }
 
@@ -69,7 +73,7 @@ public class ComandaController {
             @PathVariable Long id
     ) {
         return new ComandaResponseDTO(
-                service.fechar(id)
+                service.fechar(id), true
         );
     }
 
@@ -79,5 +83,20 @@ public class ComandaController {
             @PathVariable Long id
     ) {
         service.deletar(id);
+    }
+
+    @PostMapping("/acesso/{codigoAcesso}")
+    public ComandaResponseDTO entrar(
+            @PathVariable String codigoAcesso,
+            @Valid @RequestBody AcessarComandaDTO dados,
+            HttpServletRequest request
+    ) {
+        // Serializa entradas do mesmo navegador; a trava no banco decide
+        // o primeiro acesso entre navegadores/sessões diferentes.
+        synchronized (request.getSession()) {
+            var comanda = service.autorizarAcesso(codigoAcesso, dados.codigoEntrada());
+            acessoSessao.autorizar(comanda, request);
+            return new ComandaResponseDTO(comanda);
+        }
     }
 }

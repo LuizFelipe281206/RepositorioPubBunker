@@ -217,6 +217,11 @@ public class SegurancaConfig {
 
                         .requestMatchers(
                                 HttpMethod.POST,
+                                "/comandas/acesso/{codigoAcesso}"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
                                 "/pedidos"
                         ).permitAll()
 

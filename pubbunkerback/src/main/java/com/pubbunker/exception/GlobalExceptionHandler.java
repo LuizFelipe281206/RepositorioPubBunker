@@ -23,6 +23,17 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(CodigoComandaException.class)
+    public ResponseEntity<Map<String, Object>> tratarCodigoComanda(
+            CodigoComandaException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "status", 403,
+                "codigo", exception.getCodigo(),
+                "mensagem", exception.getMessage()
+        ));
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> tratarPermissao(
             AccessDeniedException exception
