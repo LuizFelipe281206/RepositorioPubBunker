@@ -332,14 +332,14 @@ const severidadeStatus = (status) =>
           <div class="detalhes-comanda">
             <div>
               <span class="rotulo-comanda">
-                Código de acesso
+                Código para entrar
               </span>
 
               <code class="codigo-comanda">
 {{
   comanda.status === 'EM_USO'
-      ? comanda.codigoAcesso
-      : 'Abra a comanda para gerar o acesso'
+      ? comanda.codigoEntrada
+      : 'Abra a comanda para gerar o código'
 }}              </code>
             </div>
 
@@ -440,8 +440,13 @@ const severidadeStatus = (status) =>
           >
 
           <p class="qr-code-instrucao">
-            Escaneie para acessar o cardápio desta
-            comanda.
+            O primeiro navegador entra direto. Nos próximos acessos,
+            informe os cinco dígitos fornecidos pela equipe.
+          </p>
+
+          <p class="qr-code-instrucao">
+            Código para entrar:
+            <strong>{{ comandaSelecionada?.codigoEntrada }}</strong>
           </p>
 
           <small class="qr-code-link">

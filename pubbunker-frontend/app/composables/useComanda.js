@@ -5,6 +5,7 @@ export const useComanda = () => {
     const comandaAtual = useState('comanda-atual', () => null)
     const carregandoComanda = useState('carregando-comanda', () => false)
     const versaoAcesso = useState('versao-acesso-comanda', () => 0)
+    const exigeCodigoComanda = useState('exige-codigo-comanda', () => false)
 
     const codigoComanda = computed(
         () => comandaAtual.value?.codigoAcesso || ''
@@ -32,6 +33,7 @@ export const useComanda = () => {
         }
 
         comandaAtual.value = comanda
+        exigeCodigoComanda.value = false
 
         if (import.meta.client) {
             try {
@@ -45,6 +47,7 @@ export const useComanda = () => {
     const limparComanda = () => {
         versaoAcesso.value++
         carregandoComanda.value = false
+        exigeCodigoComanda.value = false
         limparAtendimento()
         comandaAtual.value = null
 
@@ -76,14 +79,17 @@ export const useComanda = () => {
         }
     }
 
-    const acessarComanda = async (codigoAcesso) => {
+    const acessarComanda = async (codigoAcesso, codigoEntrada = null) => {
         const versao = ++versaoAcesso.value
+        const formularioVisivel = exigeCodigoComanda.value
+        if (codigoEntrada === null) exigeCodigoComanda.value = false
         carregandoComanda.value = true
         erroComanda.value = null
 
         try {
-            const { data } = await $api.get(
-                `/comandas/acesso/${encodeURIComponent(codigoAcesso)}`
+            const { data } = await $api.post(
+                `/comandas/acesso/${encodeURIComponent(codigoAcesso)}`,
+                { codigoEntrada }
             )
 
             if (versao !== versaoAcesso.value) return false
@@ -95,6 +101,14 @@ export const useComanda = () => {
 
             limparComanda()
             erroComanda.value = descreverErroComanda(erro)
+
+            const codigoErro = erro.response?.data?.codigo
+            if (['CODIGO_COMANDA_NECESSARIO', 'CODIGO_COMANDA_INVALIDO'].includes(codigoErro)) {
+                exigeCodigoComanda.value = true
+                return false
+            }
+
+            exigeCodigoComanda.value = formularioVisivel && erro.response?.status === 429
 
             abrirPopup(
     erroComanda.value.titulo,
@@ -112,14 +126,20 @@ export const useComanda = () => {
     }
 
     const tratarAcessoInvalido = (erro, codigoSolicitado) => {
+        const codigoErro = erro.response?.data?.codigo
         if (
             codigoSolicitado !== codigoComanda.value ||
-            erro.response?.data?.codigo !== 'ACESSO_COMANDA_INVALIDO'
+            !['ACESSO_COMANDA_INVALIDO', 'CODIGO_COMANDA_NECESSARIO'].includes(codigoErro)
         ) {
             return false
         }
 
         limparComanda()
+
+        if (codigoErro === 'CODIGO_COMANDA_NECESSARIO') {
+            navigateTo(`/comanda/${encodeURIComponent(codigoSolicitado)}`)
+            return true
+        }
 
         abrirPopup(
             'Atendimento encerrado',
@@ -130,9 +150,11 @@ export const useComanda = () => {
         return true
     }
 
-    const sairComanda = async () => {
-        limparComanda()
-        await navigateTo('/login')
+    const sairComanda = () => useAuth().logout()
+
+    const cancelarAcessoComanda = () => {
+        versaoAcesso.value++
+        carregandoComanda.value = false
     }
 
     return {
@@ -141,6 +163,8 @@ export const useComanda = () => {
         comandaAtiva,
         carregandoComanda,
         erroComanda,
+        exigeCodigoComanda,
+        cancelarAcessoComanda,
         restaurarComanda,
         acessarComanda,
         limparComanda,

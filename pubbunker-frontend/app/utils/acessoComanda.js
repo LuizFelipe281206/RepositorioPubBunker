@@ -22,6 +22,14 @@ export const enderecoApenasLocal = (baseUrl) => {
 
 export const descreverErroComanda = (erro) => {
     const status = erro.response?.status
+    const codigo = erro.response?.data?.codigo
+
+    if (['CODIGO_COMANDA_NECESSARIO', 'CODIGO_COMANDA_INVALIDO'].includes(codigo)) {
+        return {
+            titulo: codigo === 'CODIGO_COMANDA_INVALIDO' ? 'Código incorreto' : 'Entre na comanda',
+            mensagem: erro.response.data.mensagem
+        }
+    }
 
     if (status === 429) {
     return {
