@@ -2,6 +2,7 @@ package com.pubbunker.controller;
 
 import com.pubbunker.dto.AtualizarStatusDTO;
 import com.pubbunker.dto.CriarPedidoDTO;
+import com.pubbunker.dto.EditarPedidoDTO;
 import com.pubbunker.dto.PedidoResponseDTO;
 import com.pubbunker.service.PedidoService;
 import jakarta.validation.Valid;
@@ -47,6 +48,11 @@ public class PedidoController {
             @Valid @RequestBody CriarPedidoDTO dto
     ) {
         return new PedidoResponseDTO(service.criar(dto));
+    }
+
+    @PutMapping("/{id}")
+    public PedidoResponseDTO editarPedido(@PathVariable Long id, @Valid @RequestBody EditarPedidoDTO dto) {
+        return new PedidoResponseDTO(service.atualizar(id, dto));
     }
 
     @PatchMapping("/status/{id}")

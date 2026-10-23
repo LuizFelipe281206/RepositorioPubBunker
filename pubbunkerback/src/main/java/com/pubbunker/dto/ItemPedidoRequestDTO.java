@@ -24,7 +24,7 @@ public class ItemPedidoRequestDTO {
     @Max(value = 100, message = "A quantidade deve ser no máximo 100 por item.")
     private Integer quantidade;
 
-    @Size(max = 20, message = "Cada item deve possuir no máximo 20 adicionais.")
+    @Size(max = 4, message = "Selecione no máximo 4 adicionais por item do pedido.")
     private List<
             @NotNull(message = "O identificador do adicional deve ser informado.")
             @Positive(message = "O identificador do adicional deve ser maior que zero.")

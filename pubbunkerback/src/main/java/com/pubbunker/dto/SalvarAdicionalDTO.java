@@ -6,11 +6,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
+import com.pubbunker.service.NomeCatalogo;
 import lombok.Setter;
 
 import java.math.BigDecimal;
 import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Pattern;
 
 @Getter
 @Setter
@@ -37,5 +38,12 @@ public class SalvarAdicionalDTO {
     )
     private BigDecimal preco;
 
+    @NotBlank(message = "A categoria do adicional deve ser informada.")
+    @Size(max = 50, message = "A categoria deve possuir no máximo 50 caracteres.")
+    @Pattern(regexp = "Bebidas|Porções|Lanches", message = "Selecione Bebidas, Porções ou Lanches.")
+    private String categoria;
+
     private Boolean ativo;
+    public void setNome(String nome) { this.nome = NomeCatalogo.normalizar(nome); }
+    public void setCategoria(String categoria) { this.categoria = categoria == null ? null : categoria.trim(); }
 }

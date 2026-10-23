@@ -2,6 +2,7 @@ package com.pubbunker.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.Getter;
+import com.pubbunker.service.NomeCatalogo;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -38,7 +39,7 @@ public class SalvarProdutoDTO {
     )
     @DecimalMax(
             value = "1000.00",
-            message = "O preço do produto deve ser no máximo R$ 1.000,00."
+            message = "O preço base do produto deve ser no máximo R$ 1.000,00."
     )
     private BigDecimal preco;
 
@@ -49,14 +50,17 @@ public class SalvarProdutoDTO {
             max = 50,
             message = "A categoria deve possuir no máximo 50 caracteres."
     )
+    @Pattern(regexp = "Bebidas|Porções|Lanches", message = "Selecione Bebidas, Porções ou Lanches.")
     private String categoria;
 
     private Boolean ativo;
 
-    @Size(max = 10, message = "O produto deve possuir no máximo 10 adicionais.")
     private List<
             @NotNull(message = "O identificador do adicional deve ser informado.")
             @Positive(message = "O identificador do adicional deve ser maior que zero.")
                     Long
             > adicionaisIds = new ArrayList<>();
+    public void setDescricao(String descricao) { this.descricao = NomeCatalogo.limparBordas(descricao); }
+    public void setNome(String nome) { this.nome = NomeCatalogo.normalizar(nome); }
+    public void setCategoria(String categoria) { this.categoria = categoria == null ? null : categoria.trim(); }
 }

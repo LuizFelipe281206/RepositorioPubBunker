@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
+import com.pubbunker.service.NomeCatalogo;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -31,4 +32,7 @@ public class CriarReservaDTO {
     @NotNull(message = "A data e hora devem ser informadas.")
     @Future(message = "A data e hora da reserva devem estar no futuro.")
     private LocalDateTime dataHora;
+    public void setNomeCliente(String nomeCliente) {
+        this.nomeCliente = NomeCatalogo.normalizar(nomeCliente);
+    }
 }

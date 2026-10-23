@@ -28,4 +28,15 @@ public interface AdicionalRepository
     findAllByIdInAndDeletedAtIsNullAndAtivoTrue(
             Collection<Long> ids
     );
+    @Query(value = """
+            SELECT EXISTS (
+                SELECT 1 FROM adicionais a
+                WHERE a.deleted_at IS NULL
+                  AND nome_catalogo_chave(a.nome) = nome_catalogo_chave(:nome)
+                  AND (CAST(:idIgnorado AS BIGINT) IS NULL
+                       OR a.id <> CAST(:idIgnorado AS BIGINT))
+            )
+            """, nativeQuery = true)
+    boolean existeOutroAdicionalComNome(@Param("nome") String nome,
+                                       @Param("idIgnorado") Long idIgnorado);
 }

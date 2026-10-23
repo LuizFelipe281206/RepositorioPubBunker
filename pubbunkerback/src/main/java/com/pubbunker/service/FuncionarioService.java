@@ -90,7 +90,7 @@ public class FuncionarioService {
             return salvo;
         } catch (DataIntegrityViolationException exception) {
             throw new RegraNegocioException(
-                    "Não foi possível salvar. Verifique se o email já está em uso."
+                    "Não foi possível salvar o funcionário. Confira os dados informados."
             );
         }
     }

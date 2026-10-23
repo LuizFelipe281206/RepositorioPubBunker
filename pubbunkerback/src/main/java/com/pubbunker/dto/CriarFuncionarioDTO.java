@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.util.Locale;
+import com.pubbunker.service.NomeCatalogo;
 
 public record CriarFuncionarioDTO(
         @NotBlank(message = "Informe o nome.")
@@ -15,6 +16,7 @@ public record CriarFuncionarioDTO(
         @NotBlank(message = "Informe o email.")
         @Email(message = "Informe um email válido.")
         @Size(max = 254, message = "O email deve ter no máximo 254 caracteres.")
+        @Pattern(regexp = "[^\\s@]+@pubbunker\\.com", message = "Use um email com o domínio @pubbunker.com.")
         String email,
 
         @NotBlank(message = "Informe a senha.")
@@ -27,7 +29,7 @@ public record CriarFuncionarioDTO(
         String senha
 ) {
     public CriarFuncionarioDTO {
-        nome = nome == null ? null : nome.trim();
+        nome = NomeCatalogo.normalizar(nome);
         email = email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
 }

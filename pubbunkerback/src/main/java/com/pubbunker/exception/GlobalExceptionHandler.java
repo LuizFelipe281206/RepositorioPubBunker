@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import org.springframework.dao.DataIntegrityViolationException;
 import java.util.Map;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -99,7 +101,8 @@ public class GlobalExceptionHandler {
 
         resposta.put("data", LocalDateTime.now());
         resposta.put("status", HttpStatus.BAD_REQUEST.value());
-        resposta.put("erro", "Erro de regra de negócio");
+        resposta.put("erro", "Confira as informações");
+        resposta.put("codigo", exception.getCodigo());
         resposta.put("mensagem", exception.getMessage());
 
         return ResponseEntity
@@ -111,12 +114,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> tratarValidacao(
             MethodArgumentNotValidException exception
     ) {
-        Map<String, String> campos = new HashMap<>();
+        Map<String, String> campos = new LinkedHashMap<>();
 
         exception.getBindingResult()
                 .getFieldErrors()
                 .forEach(erro ->
-                        campos.put(
+                        campos.putIfAbsent(
                                 erro.getField(),
                                 erro.getDefaultMessage()
                         )
@@ -185,6 +188,15 @@ public class GlobalExceptionHandler {
                         "codigo", "REQUISICAO_INVALIDA",
                         "mensagem", mensagem
                 ));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> tratarConflitoDados(DataIntegrityViolationException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                "status", 409,
+                "codigo", "DADOS_EM_CONFLITO",
+                "mensagem", "Não foi possível salvar os dados. Confira as informações e tente novamente."
+        ));
     }
 
     @ExceptionHandler(Exception.class)

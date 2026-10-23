@@ -12,6 +12,7 @@ public class AdicionalResponseDTO {
     private final String nome;
     private final BigDecimal preco;
     private final Boolean ativo;
+    private final String categoria;
 
     public AdicionalResponseDTO(
             Adicional adicional
@@ -20,5 +21,6 @@ public class AdicionalResponseDTO {
         this.nome = adicional.getNome();
         this.preco = adicional.getPreco();
         this.ativo = adicional.getAtivo();
+        this.categoria = adicional.getCategoria();
     }
 }

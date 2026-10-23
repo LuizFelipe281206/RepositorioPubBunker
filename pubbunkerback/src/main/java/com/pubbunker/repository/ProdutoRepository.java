@@ -30,11 +30,7 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
                 SELECT 1
                 FROM produto p
                 WHERE p.deleted_at IS NULL
-                  AND lower(btrim(regexp_replace(
-                      p.nome, '[[:space:]]+', ' ', 'g'
-                  ))) = lower(btrim(regexp_replace(
-                      :nome, '[[:space:]]+', ' ', 'g'
-                  )))
+                  AND nome_catalogo_chave(p.nome) = nome_catalogo_chave(:nome)
                   AND (
                       CAST(:idIgnorado AS BIGINT) IS NULL
                       OR p.id <> CAST(:idIgnorado AS BIGINT)

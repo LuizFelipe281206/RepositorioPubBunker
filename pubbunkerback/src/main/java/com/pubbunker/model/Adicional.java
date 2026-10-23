@@ -34,6 +34,9 @@ public class Adicional {
     )
     private BigDecimal preco;
 
+    @Column(length = 50)
+    private String categoria;
+
     @Column(nullable = false)
     private Boolean ativo = true;
 

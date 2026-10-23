@@ -31,6 +31,7 @@ public class Pedido {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
+    @OrderBy("id ASC")
     private List<ItemPedido> itens = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)

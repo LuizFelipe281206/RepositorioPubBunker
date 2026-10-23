@@ -13,13 +13,15 @@ public final class ValoresPedido {
     }
 
     public static BigDecimal validar(BigDecimal valor) {
-        if (valor == null
-                || valor.signum() < 0
-                || valor.compareTo(VALOR_MAXIMO) > 0
+        if (valor == null || valor.signum() < 0
                 || valor.stripTrailingZeros().scale() > 2) {
+            throw new RegraNegocioException("Confira os preços e as quantidades do pedido.",
+                    "VALOR_PEDIDO_INVALIDO");
+        }
+        if (valor.compareTo(VALOR_MAXIMO) > 0) {
             throw new RegraNegocioException(
-                    "Um valor calculado do pedido ultrapassa os limites permitidos."
-            );
+                    "O total do pedido deve ser no máximo R$ 10.000,00. Remova itens ou reduza as quantidades para continuar.",
+                    "LIMITE_PEDIDO_EXCEDIDO");
         }
 
         return valor;

@@ -2,6 +2,7 @@ package com.pubbunker.dto;
 
 import com.pubbunker.enums.StatusPedido;
 import com.pubbunker.model.Pedido;
+import com.pubbunker.service.RevisaoPedido;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -19,6 +20,7 @@ public class PedidoResponseDTO {
     private final BigDecimal valorTotal;
     private final String observacao;
     private final LocalDateTime dataPedido;
+    private final String revisao;
 
     public PedidoResponseDTO(Pedido pedido) {
         this.id = pedido.getId();
@@ -40,5 +42,6 @@ public class PedidoResponseDTO {
         this.valorTotal = pedido.getValorTotal();
         this.observacao = pedido.getObservacao();
         this.dataPedido = pedido.getDataPedido();
+        this.revisao = RevisaoPedido.calcular(pedido);
     }
 }
