@@ -22,7 +22,7 @@ export const useReservas = () => {
             reservas.value = data
         } catch {
             abrirPopup(
-                'Erro',
+                'Não foi possível carregar as reservas',
                 'Não foi possível carregar as reservas.',
                 'erro'
             )

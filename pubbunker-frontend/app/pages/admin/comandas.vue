@@ -81,7 +81,7 @@ const mostrarQrCode = async (comanda) => {
     )
   } catch {
     abrirPopup(
-        'Erro',
+        'Não foi possível gerar o QR Code',
         'Não foi possível gerar o QR Code.',
         'erro'
     )
@@ -269,6 +269,8 @@ const severidadeStatus = (status) =>
                 input-id="numero-comanda"
                 v-model="numeroNovaComanda"
                 :min="1"
+            :max="2147483647"
+            :max-fraction-digits="0"
                 :use-grouping="false"
                 placeholder="Ex.: 12"
                 required
@@ -302,7 +304,7 @@ const severidadeStatus = (status) =>
 
     <section
         v-else
-        class="grade-comandas"
+        class="grade-comandas setor-rolavel" role="region" aria-label="Comandas cadastradas" tabindex="0"
     >
       <Card
           v-for="comanda in comandas"

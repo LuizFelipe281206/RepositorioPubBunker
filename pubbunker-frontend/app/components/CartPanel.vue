@@ -1,4 +1,5 @@
 <script setup>
+import { calcularItemCentavos } from "~/utils/catalogo.js"
 const {
   carrinho,
   enviandoPedido,
@@ -24,25 +25,12 @@ const confirmarCancelamento = () => {
 }
 
 const precoUnitarioItem = item => {
-  return Number(
-      item.precoUnitario ?? item.preco ?? 0
-  )
+  try { return calcularItemCentavos(item).unitario / 100 } catch { return 0 }
 }
-
 const subtotalItem = item => {
-  return (
-      precoUnitarioItem(item) *
-      Number(item.quantidade || 1)
-  )
+  try { return calcularItemCentavos(item).subtotal / 100 } catch { return 0 }
 }
-
-const total = computed(() =>
-    carrinho.value.reduce(
-        (soma, item) =>
-            soma + subtotalItem(item),
-        0
-    )
-)
+const total = computed(() => carrinho.value.reduce((soma, item) => soma + Math.round(subtotalItem(item)*100), 0) / 100)
 
 const formatarPreco = valor =>
     Number(valor).toLocaleString('pt-BR', {
@@ -65,6 +53,7 @@ const formatarPreco = valor =>
         O carrinho está vazio.
       </p>
 
+      <div class="itens-carrinho setor-rolavel" role="region" aria-label="Itens do carrinho" tabindex="0">
       <div
           v-for="(item, index) in carrinho"
           :key="
@@ -126,6 +115,7 @@ const formatarPreco = valor =>
         />
       </div>
 
+      </div>
       <div
           v-if="carrinho.length"
           class="campo campo-observacao-pedido"

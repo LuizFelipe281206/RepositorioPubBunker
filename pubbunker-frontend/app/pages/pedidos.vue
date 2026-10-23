@@ -130,7 +130,7 @@ const dadosStatus = status => {
 
       <div
           v-else
-          class="grade-pedidos"
+          class="grade-pedidos setor-rolavel" role="region" aria-label="Pedidos da comanda" tabindex="0"
       >
         <Card
             v-for="pedido in pedidosComanda"

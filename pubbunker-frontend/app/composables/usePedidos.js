@@ -1,3 +1,5 @@
+import { mensagemErro } from '~/utils/catalogo.js'
+
 export const usePedidos = () => {
   const pedidos = ref([])
   const carregandoPedidos = ref(false)
@@ -28,8 +30,8 @@ export const usePedidos = () => {
 
   const mostrarErro = (erro, mensagem) => {
     abrirPopup(
-      'Erro',
-      erro.response?.data?.mensagem || mensagem,
+      'Não foi possível atualizar o pedido',
+      mensagemErro(erro, mensagem),
       'erro',
       erro.response?.status === 429 ? 60 : null
     )
@@ -60,8 +62,7 @@ export const usePedidos = () => {
     } catch (erro) {
       if (!respostaAtual()) return false
 
-      erroPedidos.value = erro.response?.data?.mensagem ||
-        'Não foi possível atualizar os pedidos.'
+      erroPedidos.value = mensagemErro(erro, 'Não foi possível atualizar os pedidos.')
 
       if (!silencioso) mostrarErro(erro, erroPedidos.value)
       return false
@@ -126,6 +127,19 @@ export const usePedidos = () => {
     return resposta?.data || null
   }
 
+  const editarPedido = async (id, dados) => {
+    const atual = pedidos.value.find(item => item.id === id)
+    if (!atual || !['PENDENTE', 'EM_PREPARO'].includes(atual.status)) return null
+    const resposta = await alterar(
+      id,
+      () => $api.put('/pedidos/' + encodeURIComponent(id), dados),
+      atualizado => { pedidos.value = pedidos.value.map(item => item.id === id ? atualizado : item) },
+      'As alterações do pedido foram salvas.',
+      'Não foi possível salvar as alterações do pedido.'
+    )
+    return resposta?.data || null
+  }
+
   const fecharPedido = async pedido => {
     const atual = pedidos.value.find(item => item.id === pedido?.id)
     if (!atual || atual.status !== 'CONCLUIDO') return false
@@ -158,6 +172,7 @@ export const usePedidos = () => {
     erroPedidos,
     carregarPedidos,
     atualizarStatus,
+    editarPedido,
     fecharPedido
   }
 }

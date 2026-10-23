@@ -1,38 +1,22 @@
-# pubbunker-frontend
+# Frontend do PubBunkerApp
 
-This template should help get you started developing with Vue 3 in Vite.
+Aplicação Nuxt 4.6.1 com Vue 3.5.44 e PrimeVue 4.3.9. Consulte o [guia do projeto](../README.md) para preparar o banco, configurar a API e executar o sistema completo.
 
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+Com Node.js e npm instalados, execute nesta pasta:
 
 ```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
+npm ci
 npm run dev
 ```
 
-### Compile and Minify for Production
+O frontend usa a porta `3000`. A API precisa estar disponível: por padrão, é acessada no mesmo host do navegador, na porta `8080`. Para alterar as URLs, crie um `.env` com base em [.env.example](.env.example); preserve o arquivo existente se já estiver configurado.
 
-```sh
-npm run build
-```
+| Comando | Finalidade |
+| --- | --- |
+| `npm run dev` | Desenvolvimento local |
+| `npm run dev:rede` | Desenvolvimento acessível na rede, na porta 3000 |
+| `npm test` | Regressões dos formulários administrativos, com API simulada |
+| `npm run build` | Build de produção em `.output/` |
+| `npm run preview` | Conferência local do build |
+
+Após o build, `node .output/server/index.mjs` inicia o servidor Nuxt de produção. Configure as variáveis públicas no ambiente desse processo conforme o guia do projeto.

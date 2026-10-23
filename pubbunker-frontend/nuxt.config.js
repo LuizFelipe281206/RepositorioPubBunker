@@ -8,6 +8,18 @@ export default defineNuxtConfig({
 
     ssr: false,
 
+    app: {
+        head: {
+            title: 'PubBunker',
+            htmlAttrs: { lang: 'pt-BR' },
+            meta: [{ name: 'description', content: 'Cardápio, pedidos e atendimento do PubBunker.' }],
+            link: [
+                { rel: 'icon', type: 'image/png', href: '/pubbunker-icon.png' },
+                { rel: 'apple-touch-icon', href: '/pubbunker-icon.png' }
+            ]
+        }
+    },
+
     modules: [
         '@primevue/nuxt-module'
     ],
@@ -36,7 +48,7 @@ export default defineNuxtConfig({
 
     runtimeConfig: {
     public: {
-        apiBase: 'http://localhost:8080',
+        apiBase: '',
         appBaseUrl: ''
     }
 }

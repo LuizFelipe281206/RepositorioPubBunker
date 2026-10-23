@@ -127,7 +127,7 @@ export const useAuth = () => {
             }
 
             abrirPopup(
-    'Erro',
+    'Não foi possível entrar',
     mensagem,
     'erro',
     status === 429 ? 60 : null
@@ -148,7 +148,7 @@ export const useAuth = () => {
 
         } catch {
             abrirPopup(
-                'Erro',
+                'Não foi possível sair',
                 'Não foi possível encerrar a sessão. Tente novamente.',
                 'erro'
             )

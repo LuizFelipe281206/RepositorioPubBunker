@@ -1,4 +1,5 @@
 <script setup>
+import { mensagemErro } from '~/utils/catalogo.js'
 definePageMeta({
   role: 'ADMIN'
 })
@@ -51,9 +52,8 @@ const excluir = async () => {
     )
   } catch (error) {
     abrirPopup(
-      'Erro',
-      error.response?.data?.mensagem ||
-        'Não foi possível excluir o produto.',
+      'Não foi possível excluir o produto',
+      mensagemErro(error, 'Não foi possível excluir o produto.'),
       'erro'
     )
   } finally {

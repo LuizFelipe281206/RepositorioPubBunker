@@ -1,3 +1,5 @@
+import { mensagemErro } from '~/utils/catalogo.js'
+
 export const useComandas = () => {
     const comandas = useState(
         'comandas',
@@ -34,8 +36,8 @@ export const useComandas = () => {
 
     const tratarErro = (erro, mensagemPadrao) => {
         abrirPopup(
-            'Erro',
-            erro.response?.data?.mensagem || mensagemPadrao,
+            'Não foi possível atualizar as comandas',
+            mensagemErro(erro, mensagemPadrao),
             'erro'
         )
     }

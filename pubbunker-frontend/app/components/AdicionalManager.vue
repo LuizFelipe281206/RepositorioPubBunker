@@ -1,4 +1,5 @@
 <script setup>
+import { CATEGORIAS, LIMITES, normalizarNome, chaveNome, precoValido, mensagemErro } from '~/utils/catalogo.js'
 const props = defineProps({
   mostrarFormulario: {
     type: Boolean,
@@ -21,9 +22,18 @@ const {
 
 const { abrirPopup } = usePopup()
 
+const categoriaFiltrada = ref('Todas')
+const busca = ref('')
+const categoriasFiltro = computed(() => ['Todas', ...CATEGORIAS,
+  ...(adicionais.value.some(a => !CATEGORIAS.includes(a.categoria)) ? ['A classificar'] : [])])
+const adicionaisExibidos = computed(() => adicionais.value.filter(a =>
+  (categoriaFiltrada.value === 'Todas' || (CATEGORIAS.includes(a.categoria) ? a.categoria : 'A classificar') === categoriaFiltrada.value)
+  && chaveNome(a.nome).includes(chaveNome(busca.value))))
+
 const formularioVazio = () => ({
   nome: '',
   preco: null,
+  categoria: '',
   ativo: true
 })
 
@@ -35,7 +45,10 @@ const confirmacaoVisivel = ref(false)
 const salvando = ref(false)
 const excluindo = ref(false)
 
-onMounted(carregarAdicionais)
+onMounted(async () => {
+  try { await carregarAdicionais() }
+  catch (erro) { abrirPopup('Não foi possível carregar os adicionais', mensagemErro(erro, 'Tente novamente em instantes.'), 'erro') }
+})
 
 const limparFormulario = () => {
   Object.assign(form, formularioVazio())
@@ -43,30 +56,24 @@ const limparFormulario = () => {
 }
 
 const salvar = async () => {
-  if (!form.nome.trim() || form.preco === null) {
-    abrirPopup(
-      'Campos obrigatórios',
-      'Preencha o nome e o preço do adicional.',
-      'erro'
-    )
-    return
-  }
-
-  if (Number(form.preco) < 0) {
-    abrirPopup(
-      'Preço inválido',
-      'O preço do adicional não pode ser negativo.',
-      'erro'
-    )
-    return
-  }
+  if (salvando.value || carregandoAdicionais.value) return
+  const nome = normalizarNome(form.nome)
+  let problema = ''
+  if (!nome || form.preco === null || !form.categoria) problema = 'Preencha nome, preço e categoria do adicional.'
+  else if (nome.length > LIMITES.nome) problema = 'O nome deve possuir no máximo 100 caracteres.'
+  else if (!CATEGORIAS.includes(form.categoria)) problema = 'Selecione Bebidas, Porções ou Lanches.'
+  else if (!precoValido(form.preco, 0, LIMITES.adicionalCentavos)) problema = 'O preço do adicional deve estar entre R$ 0,00 e R$ 100,00, com até duas casas decimais.'
+  else if (adicionais.value.some(a => a.id !== adicionalEditandoId.value && chaveNome(a.nome) === chaveNome(nome)))
+    problema = 'Já existe um adicional com este nome.'
+  if (problema) { abrirPopup('Confira o adicional', problema, 'erro'); return }
 
   salvando.value = true
 
   try {
     await salvarAdicional(
       {
-        nome: form.nome.trim(),
+        nome,
+        categoria: form.categoria,
         preco: Number(form.preco),
         ativo: form.ativo
       },
@@ -82,15 +89,15 @@ const salvar = async () => {
         : 'O adicional foi cadastrado com sucesso.'
     )
 
-if (edicaoVisivel.value) {
-  edicaoVisivel.value = false
-} else {
-  limparFormulario()
-}  } catch (erro) {
+    if (edicaoVisivel.value) {
+      edicaoVisivel.value = false
+    } else {
+      limparFormulario()
+    }
+  } catch (erro) {
     abrirPopup(
-      'Erro',
-      erro.response?.data?.mensagem ||
-        'Não foi possível salvar o adicional.',
+      'Não foi possível salvar o adicional',
+      mensagemErro(erro, 'Confira os dados do adicional e tente novamente.'),
       'erro'
     )
   } finally {
@@ -101,6 +108,7 @@ if (edicaoVisivel.value) {
 const editar = (adicional) => {
   adicionalEditandoId.value = adicional.id
 
+  form.categoria = adicional.categoria || ''
   form.nome = adicional.nome
   form.preco = Number(adicional.preco)
   form.ativo = adicional.ativo
@@ -154,7 +162,7 @@ const confirmarExclusao = async () => {
     }
   } catch (erro) {
     abrirPopup(
-      'Erro',
+      'Não foi possível arquivar o adicional',
       erro.response?.data?.mensagem ||
         'Não foi possível arquivar o adicional.',
       'erro'
@@ -185,10 +193,22 @@ const formatarPreco = valor =>
   v-if="props.mostrarFormulario"
   v-model:nome="form.nome"
   v-model:preco="form.preco"
+  v-model:categoria="form.categoria"
   v-model:ativo="form.ativo"
   :salvando="salvando"
+  :carregando="carregandoAdicionais"
   @salvar="salvar"
 />
+
+      <div v-if="props.mostrarLista" class="filtros-setor">
+        <label for="categoria-filtro-adicionais">Categoria dos adicionais</label>
+        <Select input-id="categoria-filtro-adicionais" v-model="categoriaFiltrada" :options="categoriasFiltro" />
+        <InputText v-model="busca" aria-label="Buscar adicional" placeholder="Buscar adicional" maxlength="100" />
+        <small class="texto-secundario">{{ adicionaisExibidos.length }} adicionais encontrados.</small>
+        <small v-if="adicionais.some(a => !CATEGORIAS.includes(a.categoria))" class="texto-secundario">
+          Use Editar para classificar os adicionais antigos em Bebidas, Porções ou Lanches.
+        </small>
+      </div>
 
       <div v-if="props.mostrarLista" class="lista-adicionais">
 
@@ -200,7 +220,7 @@ const formatarPreco = valor =>
         </p>
 
         <p
-          v-else-if="!adicionais.length"
+          v-else-if="!adicionaisExibidos.length"
           class="texto-secundario"
         >
           Nenhum adicional cadastrado.
@@ -208,16 +228,17 @@ const formatarPreco = valor =>
 
         <div
           v-else
-          class="grade-adicionais"
+          class="grade-adicionais setor-rolavel" role="region" aria-label="Adicionais cadastrados" tabindex="0"
         >
           <article
-            v-for="adicional in adicionais"
+            v-for="adicional in adicionaisExibidos"
             :key="adicional.id"
             class="adicional-item"
           >
             <div class="adicional-informacoes">
               <div>
                 <strong>{{ adicional.nome }}</strong>
+                <small class="texto-secundario">{{ adicional.categoria || 'A classificar' }}</small>
 
                 <span>
                   {{ formatarPreco(adicional.preco) }}
@@ -274,9 +295,11 @@ const formatarPreco = valor =>
     v-if="adicionalEditandoId !== null"
     v-model:nome="form.nome"
     v-model:preco="form.preco"
+  v-model:categoria="form.categoria"
     v-model:ativo="form.ativo"
     editando
     :salvando="salvando"
+  :carregando="carregandoAdicionais"
     @salvar="salvar"
     @cancelar="edicaoVisivel = false"
   />
@@ -349,6 +372,12 @@ const formatarPreco = valor =>
 .grade-adicionais {
   display: grid;
   gap: 10px;
+  grid-auto-rows: minmax(5.75rem, auto);
+}
+
+.grade-adicionais.setor-rolavel {
+  max-block-size: min(calc(4 * 5.75rem + 3 * 10px + .75rem), 62vh);
+  max-block-size: min(calc(4 * 5.75rem + 3 * 10px + .75rem), 62dvh);
 }
 
 .adicional-item {

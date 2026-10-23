@@ -62,6 +62,11 @@ const salvar = async () => {
     return
   }
 
+  if (form.nomeCliente.length > 100 || form.comentario.length > 255) {
+    abrirPopup('Confira sua avaliação', 'Use até 100 caracteres no nome e até 255 no comentário.', 'erro')
+    return
+  }
+
   salvando.value = true
 
   try {
@@ -89,7 +94,7 @@ const salvar = async () => {
     limparFormulario()
   } catch (erro) {
     abrirPopup(
-      'Erro',
+      'Não foi possível salvar sua avaliação',
       mensagemErro(erro, 'Não foi possível salvar a avaliação.'),
       'erro',
       erro.response?.status === 429 ? 60 : null
@@ -144,7 +149,7 @@ const excluir = async () => {
     )
   } catch (erro) {
     abrirPopup(
-      'Erro',
+      'Não foi possível excluir sua avaliação',
       mensagemErro(erro, 'Não foi possível excluir a avaliação.'),
       'erro',
       erro.response?.status === 429 ? 60 : null
@@ -254,7 +259,7 @@ const formatarData = valor =>
         Ainda não há avaliações neste atendimento.
       </p>
 
-      <div v-else class="grade-avaliacoes">
+      <div v-else class="grade-avaliacoes setor-rolavel" role="region" aria-label="Avaliações da comanda" tabindex="0">
         <Card v-for="avaliacao in avaliacoes" :key="avaliacao.id">
           <template #title>
             Avaliação #{{ avaliacao.id }}

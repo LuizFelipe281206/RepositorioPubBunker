@@ -7,6 +7,7 @@ const {
   erroPedidos,
   carregarPedidos,
   atualizarStatus,
+  editarPedido,
   fecharPedido
 } = usePedidos()
 
@@ -14,6 +15,12 @@ const statusSelecionado = ref('PENDENTE')
 const pedidoParaArquivar = ref(null)
 const confirmacaoPedidoVisivel = ref(false)
 const consultaEmAndamento = ref(false)
+const pedidoEmEdicao = ref(null)
+const edicaoVisivel = computed({
+  get: () => Boolean(pedidoEmEdicao.value),
+  set: visivel => { if (!visivel && !processandoPedidos.value) pedidoEmEdicao.value = null }
+})
+const modalAberto = computed(() => confirmacaoPedidoVisivel.value || edicaoVisivel.value)
 
 const opcoesStatus = [
   {
@@ -61,7 +68,7 @@ const ocupado = computed(() =>
 
 const selecionarStatus = status => {
   if (
-    processandoPedidos.value || confirmacaoPedidoVisivel.value ||
+    processandoPedidos.value || modalAberto.value ||
     !opcoesStatus.some(opcao => opcao.valor === status)
   ) return
 
@@ -69,7 +76,7 @@ const selecionarStatus = status => {
 }
 
 const atualizarPedidos = async (silencioso = false) => {
-  if (ocupado.value || confirmacaoPedidoVisivel.value) return
+  if (ocupado.value || modalAberto.value) return
   consultaEmAndamento.value = true
 
   try {
@@ -80,8 +87,17 @@ const atualizarPedidos = async (silencioso = false) => {
 }
 
 const mudarStatus = async (pedido, status) => {
-  if (ocupado.value || confirmacaoPedidoVisivel.value) return
+  if (ocupado.value || modalAberto.value) return
   await atualizarStatus(pedido.id, status)
+}
+
+const abrirEdicao = pedido => {
+  if (ocupado.value || modalAberto.value || !['PENDENTE', 'EM_PREPARO'].includes(pedido.status)) return
+  pedidoEmEdicao.value = { id: pedido.id }
+}
+const salvarEdicao = async dados => {
+  if (ocupado.value || !pedidoEmEdicao.value) return
+  if (await editarPedido(pedidoEmEdicao.value.id, dados)) pedidoEmEdicao.value = null
 }
 
 const fecharConfirmacao = () => {
@@ -91,7 +107,7 @@ const fecharConfirmacao = () => {
 }
 
 const solicitarArquivamento = pedido => {
-  if (ocupado.value || confirmacaoPedidoVisivel.value) return
+  if (ocupado.value || modalAberto.value) return
 
   const atual = pedidos.value.find(item => item.id === pedido.id)
   if (!atual || atual.status !== 'CONCLUIDO') return
@@ -116,6 +132,9 @@ const confirmarArquivamento = async () => {
 }
 
 watch(pedidos, () => {
+  if (pedidoEmEdicao.value && !pedidos.value.some(item => item.id === pedidoEmEdicao.value.id)) {
+    pedidoEmEdicao.value = null
+  }
   if (
     pedidoParaArquivar.value &&
     !pedidos.value.some(item =>
@@ -139,6 +158,7 @@ onBeforeUnmount(() => {
   clearInterval(intervaloAtualizacao)
   confirmacaoPedidoVisivel.value = false
   pedidoParaArquivar.value = null
+  pedidoEmEdicao.value = null
 })
 
 const formatarPreco = valor =>
@@ -158,7 +178,6 @@ const formatarData = valor =>
         <h2>Pedidos recebidos</h2>
         <p class="texto-secundario">
           Total no painel: {{ pedidos.length }}.
-          Atualização automática a cada 5 segundos.
         </p>
       </div>
 
@@ -167,7 +186,7 @@ const formatarData = valor =>
         icon="pi pi-refresh"
         severity="secondary"
         :loading="carregandoPedidos"
-        :disabled="ocupado || confirmacaoPedidoVisivel"
+        :disabled="ocupado || modalAberto"
         @click="atualizarPedidos()"
       />
     </div>
@@ -180,7 +199,7 @@ const formatarData = valor =>
         class="filtro-pedido"
         :class="{ 'filtro-pedido-ativo': statusSelecionado === opcao.valor }"
         :aria-pressed="statusSelecionado === opcao.valor"
-        :disabled="processandoPedidos || confirmacaoPedidoVisivel"
+        :disabled="processandoPedidos || modalAberto"
         @click="selecionarStatus(opcao.valor)"
       >
         <span>{{ opcao.titulo }}</span>
@@ -199,7 +218,7 @@ const formatarData = valor =>
       {{ opcaoAtual.vazio }}
     </p>
 
-    <div v-else class="grade-pedidos" :aria-busy="carregandoPedidos">
+    <div v-else class="grade-pedidos setor-rolavel" role="region" aria-label="Pedidos por status" tabindex="0" :aria-busy="carregandoPedidos">
       <Card v-for="pedido in pedidosFiltrados" :key="pedido.id" class="pedido-card">
         <template #title>
           <span v-if="pedido.numeroComanda">
@@ -280,12 +299,16 @@ const formatarData = valor =>
           <div class="acoes-card">
             <Tag :value="opcaoAtual.etiqueta" :severity="opcaoAtual.severity" />
 
+            <Button v-if="['PENDENTE', 'EM_PREPARO'].includes(pedido.status)"
+              label="Editar pedido" icon="pi pi-pencil" severity="secondary" outlined
+              :disabled="ocupado || modalAberto" @click="abrirEdicao(pedido)" />
+
             <Button
               v-if="pedido.status === 'PENDENTE'"
               label="Em preparo"
               severity="warn"
               :loading="processandoPedidos && pedidoProcessandoId === pedido.id"
-              :disabled="ocupado || confirmacaoPedidoVisivel"
+              :disabled="ocupado || modalAberto"
               @click="mudarStatus(pedido, 'EM_PREPARO')"
             />
 
@@ -294,7 +317,7 @@ const formatarData = valor =>
               label="Concluir"
               severity="success"
               :loading="processandoPedidos && pedidoProcessandoId === pedido.id"
-              :disabled="ocupado || confirmacaoPedidoVisivel"
+              :disabled="ocupado || modalAberto"
               @click="mudarStatus(pedido, 'CONCLUIDO')"
             />
 
@@ -302,13 +325,19 @@ const formatarData = valor =>
               v-else-if="pedido.status === 'CONCLUIDO'"
               label="Arquivar"
               severity="secondary"
-              :disabled="ocupado || confirmacaoPedidoVisivel"
+              :disabled="ocupado || modalAberto"
               @click="solicitarArquivamento(pedido)"
             />
           </div>
         </template>
       </Card>
     </div>
+
+    <Dialog v-model:visible="edicaoVisivel" modal :header="`Editar pedido #${pedidoEmEdicao?.id || ''}`"
+      :closable="false" :draggable="false" :close-on-escape="!processandoPedidos" :style="{ width: 'min(94vw, 740px)' }">
+      <OrderEditForm v-if="pedidoEmEdicao" :key="pedidoEmEdicao.id" :pedido-id="pedidoEmEdicao.id"
+        :salvando="processandoPedidos" @salvar="salvarEdicao" @cancelar="edicaoVisivel = false" />
+    </Dialog>
 
     <Dialog
       v-model:visible="confirmacaoPedidoVisivel"

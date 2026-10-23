@@ -1,4 +1,5 @@
 <script setup>
+import { mensagemErro, normalizarNome } from '~/utils/catalogo.js'
 definePageMeta({
   roles: ['ADMIN', 'FUNCIONARIO']
 })
@@ -99,17 +100,21 @@ const salvar = async () => {
     return
   }
 
-  if (Number(form.quantidadePessoas) < 1) {
+  if (!Number.isInteger(Number(form.quantidadePessoas)) || Number(form.quantidadePessoas) < 1 || Number(form.quantidadePessoas) > 2147483647) {
     abrirPopup(
         'Quantidade inválida',
-        'A reserva deve possuir pelo menos uma pessoa.',
+        'Informe uma quantidade inteira de pessoas, a partir de 1.',
         'erro'
     )
 
     return
   }
 
-  if (new Date(form.dataHora) <= new Date()) {
+  if (normalizarNome(form.nomeCliente).length > 100) {
+    abrirPopup('Confira a reserva', 'O nome do cliente deve possuir no máximo 100 caracteres.', 'erro')
+    return
+  }
+  if (!Number.isFinite(new Date(form.dataHora).getTime()) || new Date(form.dataHora) <= new Date()) {
     abrirPopup(
         'Data inválida',
         'A data da reserva deve estar no futuro.',
@@ -140,10 +145,10 @@ const salvar = async () => {
     }
 
     limparFormulario()
-  } catch {
+  } catch (erro) {
     abrirPopup(
-        'Erro',
-        'Não foi possível salvar a reserva.',
+        'Não foi possível salvar a reserva',
+        mensagemErro(erro, 'Não foi possível salvar a reserva.'),
         'erro'
     )
   }
@@ -180,10 +185,10 @@ const alterarStatus = async (
         'Status atualizado',
         `A reserva agora está como ${novoStatus}.`
     )
-  } catch {
+  } catch (erro) {
     abrirPopup(
-        'Erro',
-        'Não foi possível atualizar o status.',
+        'Não foi possível atualizar a reserva',
+        mensagemErro(erro, 'Não foi possível atualizar o status.'),
         'erro'
     )
   }
@@ -247,12 +252,12 @@ const confirmarAcaoReserva = async () => {
         ? 'A reserva foi cancelada e mantida no histórico.'
         : 'A reserva foi removida da listagem.'
     )
-  } catch {
+  } catch (erro) {
     abrirPopup(
-      'Erro',
-      acao === 'CANCELAR'
+      'Não foi possível concluir a ação',
+      mensagemErro(erro, acao === 'CANCELAR'
         ? 'Não foi possível cancelar a reserva.'
-        : 'Não foi possível arquivar a reserva.',
+        : 'Não foi possível arquivar a reserva.'),
       'erro'
     )
   } finally {
@@ -317,6 +322,8 @@ const statusSeveridade = status => ({
                 id="quantidade-pessoas"
                 v-model="form.quantidadePessoas"
                 :min="1"
+                :max="2147483647"
+                :max-fraction-digits="0"
                 :use-grouping="false"
                 fluid
             />
@@ -390,7 +397,7 @@ const statusSeveridade = status => ({
 
       <div
           v-else
-          class="grade-reservas"
+          class="grade-reservas setor-rolavel" role="region" aria-label="Reservas cadastradas" tabindex="0"
       >
         <Card
             v-for="reserva in reservasFiltradas"

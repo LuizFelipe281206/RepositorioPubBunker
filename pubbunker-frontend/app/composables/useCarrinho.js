@@ -1,3 +1,5 @@
+import { prepararInclusao, validarCarrinho, mensagemErro } from '~/utils/catalogo.js'
+
 export const useCarrinho = () => {
     const carrinho = useState('carrinho', () => [])
     const enviandoPedido = useState('enviando-pedido', () => false)
@@ -11,49 +13,16 @@ export const useCarrinho = () => {
 
     const adicionar = (produto, quantidade = 1, adicionais = []) => {
         if (enviandoPedido.value) return
-        const quantidadeSelecionada = Math.max(
-            1,
-            Number(quantidade) || 1
-        )
-
-        const adicionaisUnicos = (
-            Array.isArray(adicionais) ? adicionais : []
-        ).filter(
-            (adicional, indice, lista) =>
-                lista.findIndex(item => item.id === adicional.id) === indice
-        )
-
-        const adicionaisIds = adicionaisUnicos
-            .map(adicional => adicional.id)
-            .sort((a, b) => a - b)
-
-        const chaveConfiguracao =
-            `${produto.id}:${adicionaisIds.join('-')}`
-
-        const produtoExistente = carrinho.value.find(
-            item => item.chaveConfiguracao === chaveConfiguracao
-        )
-
-        if (produtoExistente) {
-            produtoExistente.quantidade += quantidadeSelecionada
-        } else {
-            const valorAdicionais = adicionaisUnicos.reduce(
-                (soma, adicional) => soma + Number(adicional.preco),
-                0
-            )
-
-            carrinho.value.push({
-                ...produto,
-                quantidade: quantidadeSelecionada,
-                adicionaisSelecionados: adicionaisUnicos,
-                precoUnitario: Number(produto.preco) + valorAdicionais,
-                chaveConfiguracao
-            })
+        const resultado = prepararInclusao(carrinho.value, produto, quantidade, adicionais)
+        if (resultado.erro) {
+            abrirPopup('Confira seu pedido', resultado.erro, 'erro')
+            return false
         }
+        carrinho.value = resultado.itens
 
         abrirPopup(
             'Produto adicionado',
-            `${quantidadeSelecionada}x ${produto.nome} adicionado ao pedido.`
+            `${quantidade}x ${produto.nome} adicionado ao pedido.`
         )
     }
 
@@ -86,6 +55,12 @@ export const useCarrinho = () => {
                 'erro'
             )
             return
+        }
+
+        const problema = validarCarrinho(carrinho.value, observacao.value)
+        if (problema) {
+            abrirPopup('Confira seu pedido', problema, 'erro')
+            return null
         }
 
         enviandoPedido.value = true
@@ -129,9 +104,9 @@ export const useCarrinho = () => {
             if (tratarAcessoInvalido(erro, codigoSolicitado)) return null
 
             abrirPopup(
-                'Erro',
-            erro.response?.data?.mensagem ||
-                'Não foi possível finalizar o pedido.',
+                erro.response?.data?.codigo === 'LIMITE_PEDIDO_EXCEDIDO'
+                    ? 'Pedido acima do limite' : 'Não foi possível enviar o pedido',
+                mensagemErro(erro, 'Não foi possível finalizar o pedido. Tente novamente.'),
                 'erro',
             erro.response?.status === 429 ? 60 : null
             )

@@ -1,7 +1,9 @@
 <script setup>
+import { CATEGORIAS } from '~/utils/catalogo.js'
 const props = defineProps({
   editando: Boolean,
-  salvando: Boolean
+  salvando: Boolean,
+  carregando: Boolean
 })
 
 const nome = defineModel('nome', {
@@ -13,6 +15,8 @@ const preco = defineModel('preco', {
   type: Number,
   default: null
 })
+
+const categoria = defineModel('categoria', { type: String, default: '' })
 
 const ativo = defineModel('ativo', {
   type: Boolean,
@@ -34,7 +38,7 @@ defineEmits(['salvar', 'cancelar'])
         v-model="nome"
         maxlength="100"
         placeholder="Ex.: Bacon extra"
-        :disabled="props.salvando"
+        :disabled="props.salvando || props.carregando"
         fluid
       />
     </div>
@@ -51,16 +55,24 @@ defineEmits(['salvar', 'cancelar'])
         currency="BRL"
         locale="pt-BR"
         :min="0"
-        :disabled="props.salvando"
+        :max="100"
+        :max-fraction-digits="2"
+        :disabled="props.salvando || props.carregando"
         fluid
       />
+    </div>
+
+    <div class="campo">
+      <label for="categoria-adicional">Categoria <span class="campo-obrigatorio">*</span></label>
+      <Select input-id="categoria-adicional" v-model="categoria" :options="CATEGORIAS"
+        placeholder="Selecione" :disabled="props.salvando || props.carregando" fluid />
     </div>
 
     <div class="campo checkbox-campo">
       <Checkbox
         v-model="ativo"
         input-id="adicional-ativo"
-        :disabled="props.salvando"
+        :disabled="props.salvando || props.carregando"
         binary
       />
 
@@ -77,7 +89,7 @@ defineEmits(['salvar', 'cancelar'])
         "
         icon="pi pi-save"
         :loading="props.salvando"
-        :disabled="props.salvando"
+        :disabled="props.salvando || props.carregando"
       />
 
       <Button
@@ -85,7 +97,7 @@ defineEmits(['salvar', 'cancelar'])
         type="button"
         label="Cancelar"
         severity="secondary"
-        :disabled="props.salvando"
+        :disabled="props.salvando || props.carregando"
         @click="$emit('cancelar')"
       />
     </div>

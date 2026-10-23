@@ -1,4 +1,5 @@
 <script setup>
+import { mensagemErro } from '~/utils/catalogo.js'
 definePageMeta({ role: 'ADMIN' })
 
 const { $api } = useNuxtApp()
@@ -39,33 +40,30 @@ const normalizarEmail = email => {
     : valor
 }
 
-const dominioEmail = computed(() => {
-  const emailAnterior = selecionado.value?.email || ''
-  const inicioDominio = emailAnterior.lastIndexOf('@')
-
-  return modo.value === 'editar' && inicioDominio >= 0
-    ? emailAnterior.slice(inicioDominio)
-    : '@pubbunker.com'
-})
+const dominioEmail = '@pubbunker.com'
+const emailLegado = computed(() =>
+  modo.value === 'editar' &&
+  !(selecionado.value?.email || '').toLowerCase().endsWith(dominioEmail)
+)
 
 const usuarioEmail = computed({
   get: () => {
     const email = formulario.email
 
-    return email.toLowerCase().endsWith(dominioEmail.value.toLowerCase())
-      ? email.slice(0, -dominioEmail.value.length)
+    return email.toLowerCase().endsWith(dominioEmail)
+      ? email.slice(0, -dominioEmail.length)
       : email
   },
   set: valor => {
     const texto = valor.trim()
 
     const usuario = texto.toLowerCase().endsWith(
-      dominioEmail.value.toLowerCase()
+      dominioEmail
     )
-      ? texto.slice(0, -dominioEmail.value.length)
+      ? texto.slice(0, -dominioEmail.length)
       : texto
 
-    formulario.email = usuario ? usuario + dominioEmail.value : ''
+    formulario.email = usuario ? usuario + dominioEmail : ''
   }
 })
 
@@ -81,7 +79,7 @@ const alternarSenha = () => {
 
 const emailValido = email =>
   email.length <= 254 &&
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  /^[^\s@]+@pubbunker\.com$/.test(email)
 
 const senhaValida = senha =>
   Array.from(senha).length >= 8 &&
@@ -134,8 +132,7 @@ const carregar = async () => {
     if (!respostaAtual()) return
 
     funcionarios.value = []
-    erro.value = falha.response?.data?.mensagem ||
-      'Não foi possível carregar os funcionários.'
+    erro.value = mensagemErro(falha, 'Não foi possível carregar os funcionários.')
   } finally {
     if (pedido === versao) carregando.value = false
   }
@@ -196,7 +193,8 @@ const confirmar = async () => {
     }
 
     if (!emailValido(dados.email)) {
-      erroFormulario.value = 'Informe um email válido com até 254 caracteres.'
+      erroFormulario.value =
+        'Informe um email válido com até 254 caracteres e domínio @pubbunker.com.'
       return
     }
 
@@ -205,7 +203,7 @@ const confirmar = async () => {
 
       if (!senhaValida(senha)) {
         erroFormulario.value =
-          'A senha deve ter entre 8 e 128 caracteres, com pelo menos um número e um caractere especial.'
+          'A senha deve ter no mínimo 8 caracteres, com pelo menos um número e um caractere especial.'
         return
       }
 
@@ -341,7 +339,7 @@ onMounted(carregar)
       Nenhum funcionário ativo cadastrado.
     </p>
 
-    <div v-else class="lista-funcionarios">
+    <div v-else class="lista-funcionarios setor-rolavel" role="region" aria-label="Funcionários cadastrados" tabindex="0">
       <Card
         v-for="funcionario in funcionarios"
         :key="funcionario.id"
@@ -415,7 +413,22 @@ onMounted(carregar)
         <div class="campo">
           <label for="funcionario-email">Email</label>
 
+          <InputText
+            v-if="emailLegado"
+            id="funcionario-email"
+            v-model="formulario.email"
+            type="email"
+            maxlength="254"
+            autocomplete="off"
+            autocapitalize="none"
+            :spellcheck="false"
+            aria-describedby="funcionario-email-legado"
+            required
+            :disabled="processando"
+          />
+
           <div
+            v-else
             class="email-fixo"
             :class="{ 'email-desabilitado': processando }"
             @click="focarEmail"
@@ -447,6 +460,10 @@ onMounted(carregar)
               class="email-dominio"
             >{{ dominioEmail }}</span>
           </div>
+
+          <small v-if="emailLegado" id="funcionario-email-legado" class="texto-secundario">
+            Atualize o email para usar @pubbunker.com.
+          </small>
         </div>
 
         <div v-if="modo === 'criar'" class="campo">
@@ -481,7 +498,7 @@ onMounted(carregar)
           </div>
 
           <small class="texto-secundario">
-            De 8 a 128 caracteres, incluindo um número
+            No mínimo 8 caracteres, incluindo um número
             e um caractere especial.
           </small>
         </div>

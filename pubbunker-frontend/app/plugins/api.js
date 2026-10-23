@@ -1,10 +1,11 @@
 import axios from 'axios'
+import { resolverBaseApi } from '~/utils/enderecoApi.js'
 
 export default defineNuxtPlugin(() => {
     const config = useRuntimeConfig()
 
     const api = axios.create({
-        baseURL: config.public.apiBase,
+        baseURL: resolverBaseApi(config.public.apiBase, import.meta.client ? window.location.origin : 'http://127.0.0.1:3000'),
         timeout: 20000,
         withCredentials: true,
         headers: {

@@ -1,4 +1,5 @@
 <script setup>
+import { CATEGORIAS, prepararInclusao } from '~/utils/catalogo.js'
 const props = defineProps({
   produtos: {
     type: Array,
@@ -17,25 +18,14 @@ const emit = defineEmits([
   'excluir'
 ])
 
-const categoriasCardapio = [
-  'Bebidas',
-  'Porções',
-  'Lanches'
-]
+const categoriasCardapio = computed(() => props.modoAdmin ? ['Todas', ...CATEGORIAS] : CATEGORIAS)
 
-const categoriaSelecionada = ref('Bebidas')
+const categoriaSelecionada = ref(props.modoAdmin ? 'Todas' : 'Bebidas')
+const carrinhoAtual = useState('carrinho', () => [])
 
-const produtosExibidos = computed(() => {
-  if (props.modoAdmin) {
-    return props.produtos
-  }
-
-  return props.produtos.filter(
-      produto =>
-          produto.ativo &&
-          produto.categoria === categoriaSelecionada.value
-  )
-})
+const produtosExibidos = computed(() => props.produtos.filter(produto =>
+  (props.modoAdmin || produto.ativo) &&
+  (categoriaSelecionada.value === 'Todas' || produto.categoria === categoriaSelecionada.value)))
 
 const dialogQuantidadeVisivel = ref(false)
 const produtoSelecionado = ref(null)
@@ -60,6 +50,10 @@ const adicionaisSelecionados = computed(() => {
   )
 })
 
+const problemaInclusao = computed(() => produtoSelecionado.value
+  ? prepararInclusao(carrinhoAtual.value, produtoSelecionado.value,
+      quantidadeSelecionada.value, adicionaisSelecionados.value).erro || '' : '')
+
 const abrirSeletorQuantidade = produto => {
   produtoSelecionado.value = produto
   quantidadeSelecionada.value = 1
@@ -82,13 +76,13 @@ const diminuirQuantidade = () => {
 
 const aumentarQuantidade = () => {
   quantidadeSelecionada.value = Math.min(
-      99,
+      100,
       quantidadeSelecionada.value + 1
   )
 }
 
 const confirmarAdicao = () => {
-  if (!produtoSelecionado.value) {
+  if (!produtoSelecionado.value || problemaInclusao.value) {
     return
   }
 
@@ -135,7 +129,6 @@ const formatarPreco = valor =>
 
 <template>
   <nav
-    v-if="!modoAdmin"
     class="abas-cardapio"
     aria-label="Categorias do cardápio"
 >
@@ -164,7 +157,7 @@ const formatarPreco = valor =>
 >
   Nenhum produto disponível nesta categoria.
 </p>
-  <div class="lista-produtos">
+  <div class="lista-produtos setor-rolavel" role="region" aria-label="Produtos por categoria" tabindex="0">
     <Card
         v-for="produto in produtosExibidos"        
         :key="produto.id"
@@ -274,10 +267,12 @@ const formatarPreco = valor =>
               v-model="adicionaisSelecionadosIds"
               :input-id="`adicional-${adicional.id}`"
               :value="adicional.id"
+              :disabled="adicionaisSelecionadosIds.length >= 4 && !adicionaisSelecionadosIds.includes(adicional.id)"
           />
 
           <span class="adicional-dialogo-dados">
             <strong>{{ adicional.nome }}</strong>
+            <small v-if="adicional.categoria">{{ adicional.categoria }}</small>
 
             <small>
               + {{ formatarPreco(adicional.preco) }}
@@ -308,13 +303,14 @@ const formatarPreco = valor =>
               icon="pi pi-plus"
               severity="secondary"
               outlined
-              :disabled="quantidadeSelecionada >= 99"
+              :disabled="quantidadeSelecionada >= 100"
               aria-label="Aumentar quantidade"
               @click="aumentarQuantidade"
           />
         </div>
       </div>
 
+      <p v-if="problemaInclusao" role="alert" class="erro-formulario">{{ problemaInclusao }}</p>
       <div class="resumo-item-dialogo">
         <span>
           Valor por unidade:
@@ -350,6 +346,7 @@ const formatarPreco = valor =>
           label="Adicionar"
           icon="pi pi-shopping-cart"
           severity="success"
+          :disabled="Boolean(problemaInclusao)"
           @click="confirmarAdicao"
       />
     </template>

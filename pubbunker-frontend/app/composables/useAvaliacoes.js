@@ -1,3 +1,5 @@
+import { mensagemErro } from '~/utils/catalogo.js'
+
 export const useAvaliacoes = () => {
     const avaliacoes = useState('avaliacoes', () => [])
     const carregandoAvaliacoes = useState('carregando-avaliacoes', () => false)
@@ -64,9 +66,8 @@ export const useAvaliacoes = () => {
 
             if (!tratarAcessoInvalido(erro, codigo)) {
                 abrirPopup(
-                    'Erro',
-                    erro.response?.data?.mensagem ||
-                        'Não foi possível carregar as avaliações.',
+                    'Não foi possível carregar as avaliações',
+                    mensagemErro(erro, 'Não foi possível carregar as avaliações.'),
                     'erro',
                     erro.response?.status === 429 ? 60 : null
                 )

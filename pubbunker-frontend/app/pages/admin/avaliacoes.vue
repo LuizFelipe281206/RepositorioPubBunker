@@ -1,4 +1,5 @@
 <script setup>
+import { mensagemErro } from '~/utils/catalogo.js'
 definePageMeta({ role: 'ADMIN' })
 
 const { $api } = useNuxtApp()
@@ -51,8 +52,7 @@ const carregar = async () => {
   } catch (falha) {
     if (!respostaAtual()) return
     avaliacoes.value = []
-    erro.value = falha.response?.data?.mensagem ||
-      'Não foi possível carregar as avaliações.'
+    erro.value = mensagemErro(falha, 'Não foi possível carregar as avaliações.')
   } finally {
     if (versao === versaoConsulta) carregando.value = false
   }
@@ -146,7 +146,9 @@ const confirmarAcao = async () => {
     if (!respostaAtual()) return
 
     abrirPopup(
-      'Erro',
+      exclusao
+        ? 'Não foi possível excluir a avaliação'
+        : 'Não foi possível arquivar a avaliação',
       falha.response?.data?.mensagem ||
         (exclusao
           ? 'Não foi possível excluir a avaliação.'
@@ -237,7 +239,7 @@ const formatarData = valor =>
       }}
     </p>
 
-    <div v-else class="grade-avaliacoes">
+    <div v-else class="grade-avaliacoes setor-rolavel" role="region" aria-label="Avaliações recebidas" tabindex="0">
       <Card v-for="avaliacao in avaliacoes" :key="avaliacao.id">
         <template #title>
           {{ avaliacao.nomeCliente || avaliacao.usuarioNome || 'Anônimo' }}

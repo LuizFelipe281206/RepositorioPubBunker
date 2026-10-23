@@ -37,7 +37,7 @@ export const usePedidosComanda = () => {
 
             if (!silencioso) {
                 abrirPopup(
-                    'Erro',
+                    'Não foi possível carregar seus pedidos',
                     'Não foi possível carregar os pedidos da comanda.',
                     'erro'
                 )

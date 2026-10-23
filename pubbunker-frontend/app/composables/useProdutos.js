@@ -21,7 +21,7 @@ export const useProdutos = () => {
             produtos.value = Array.isArray(data) ? data : []
         } catch {
             abrirPopup(
-                'Erro',
+                'Não foi possível carregar os produtos',
                 'Não foi possível carregar os produtos.',
                 'erro'
             )
@@ -34,18 +34,18 @@ export const useProdutos = () => {
         produto,
         id = null
     ) => {
-        if (id) {
-            await $api.put(`/produtos/${id}`, produto)
-        } else {
-            await $api.post('/produtos', produto)
-        }
-
-        await carregarProdutos()
+        const { data } = id
+            ? await $api.put(`/produtos/${id}`, produto)
+            : await $api.post('/produtos', produto)
+        const indice = produtos.value.findIndex(item => item.id === data.id)
+        if (indice >= 0) produtos.value[indice] = data
+        else produtos.value.push(data)
+        return data
     }
 
-    const excluirProduto = async (id) => {
+    const excluirProduto = async id => {
         await $api.delete(`/produtos/${id}`)
-        await carregarProdutos()
+        produtos.value = produtos.value.filter(item => item.id !== id)
     }
 
     return {
