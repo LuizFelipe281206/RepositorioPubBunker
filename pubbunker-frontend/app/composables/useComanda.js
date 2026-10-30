@@ -19,13 +19,17 @@ export const useComanda = () => {
     const { abrirPopup } = usePopup()
 
     const limparAtendimento = () => {
-    useState('carrinho', () => []).value = []
-    useState('observacao-pedido', () => '').value = ''
-    useState('pedidos-comanda', () => []).value = []
-    useState('avaliacoes', () => []).value = []
-    useState('carregando-avaliacoes', () => false).value = false
-    useState('versao-consulta-avaliacoes', () => 0).value++
-}
+        useState('carrinho', () => []).value = []
+        useState('observacao-pedido', () => '').value = ''
+        useState('pedidos-comanda', () => []).value = []
+        useState('erro-pedidos-comanda', () => null).value = null
+        useState('carregando-pedidos-comanda', () => false).value = false
+        useState('versao-consulta-pedidos-comanda', () => 0).value++
+        useState('avaliacoes', () => []).value = []
+        useState('erro-avaliacoes', () => null).value = null
+        useState('carregando-avaliacoes', () => false).value = false
+        useState('versao-consulta-avaliacoes', () => 0).value++
+    }
 
     const salvarComanda = (comanda) => {
         if (codigoComanda.value !== comanda.codigoAcesso) {

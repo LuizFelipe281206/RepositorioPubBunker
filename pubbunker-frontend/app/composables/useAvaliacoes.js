@@ -2,6 +2,7 @@ import { mensagemErro } from '~/utils/catalogo.js'
 
 export const useAvaliacoes = () => {
     const avaliacoes = useState('avaliacoes', () => [])
+    const erroAvaliacoes = useState('erro-avaliacoes', () => null)
     const carregandoAvaliacoes = useState('carregando-avaliacoes', () => false)
     const versaoConsulta = useState('versao-consulta-avaliacoes', () => 0)
 
@@ -40,6 +41,7 @@ export const useAvaliacoes = () => {
 
         if (!podeAvaliar.value) {
             avaliacoes.value = []
+            erroAvaliacoes.value = null
             carregandoAvaliacoes.value = false
             return
         }
@@ -55,6 +57,7 @@ export const useAvaliacoes = () => {
                 codigo === codigoComanda.value
             ) {
                 avaliacoes.value = data
+                erroAvaliacoes.value = null
             }
         } catch (erro) {
             if (
@@ -62,14 +65,17 @@ export const useAvaliacoes = () => {
                 codigo !== codigoComanda.value
             ) return
 
-            avaliacoes.value = []
-
             if (!tratarAcessoInvalido(erro, codigo)) {
+                erroAvaliacoes.value = mensagemErro(
+                    erro,
+                    'Não foi possível carregar as avaliações. Tente novamente.'
+                )
                 abrirPopup(
                     'Não foi possível carregar as avaliações',
-                    mensagemErro(erro, 'Não foi possível carregar as avaliações.'),
+                    erroAvaliacoes.value,
                     'erro',
-                    erro.response?.status === 429 ? 60 : null
+                    erro.response?.status === 429
+                        ? erro.response.data?.aguardeSegundos || 60 : null
                 )
             }
         } finally {
@@ -144,6 +150,7 @@ export const useAvaliacoes = () => {
     return {
         podeAvaliar,
         avaliacoes,
+        erroAvaliacoes,
         carregandoAvaliacoes,
         carregarAvaliacoes,
         criarAvaliacao,

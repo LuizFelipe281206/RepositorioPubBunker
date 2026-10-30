@@ -6,6 +6,7 @@ definePageMeta({
 const {
   podeAvaliar,
   avaliacoes,
+  erroAvaliacoes,
   carregandoAvaliacoes,
   carregarAvaliacoes,
   criarAvaliacao,
@@ -255,11 +256,20 @@ const formatarData = valor =>
       <p v-if="carregandoAvaliacoes" class="texto-secundario">
         Carregando avaliações...
       </p>
+      <div v-else-if="erroAvaliacoes" class="painel">
+        <p class="texto-secundario" role="alert">{{ erroAvaliacoes }}</p>
+        <Button
+          label="Tentar novamente"
+          icon="pi pi-refresh"
+          severity="secondary"
+          @click="carregarAvaliacoes"
+        />
+      </div>
       <p v-else-if="avaliacoes.length === 0" class="texto-secundario">
         Ainda não há avaliações neste atendimento.
       </p>
 
-      <div v-else class="grade-avaliacoes setor-rolavel" role="region" aria-label="Avaliações da comanda" tabindex="0">
+      <div v-if="!carregandoAvaliacoes && avaliacoes.length" class="grade-avaliacoes setor-rolavel" role="region" aria-label="Avaliações da comanda" tabindex="0">
         <Card v-for="avaliacao in avaliacoes" :key="avaliacao.id">
           <template #title>
             Avaliação #{{ avaliacao.id }}

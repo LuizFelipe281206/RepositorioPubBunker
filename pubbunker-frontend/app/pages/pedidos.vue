@@ -10,6 +10,7 @@ const {
 
 const {
   pedidosComanda,
+  erroPedidosComanda,
   carregandoPedidosComanda,
   carregarPedidosComanda
 } = usePedidosComanda()
@@ -108,6 +109,14 @@ const dadosStatus = status => {
         />
       </div>
 
+      <p
+          v-if="!carregandoPedidosComanda && comandaAtiva && erroPedidosComanda"
+          class="texto-secundario"
+          role="alert"
+      >
+        {{ erroPedidosComanda }}
+      </p>
+
       <div
           v-if="carregandoPedidosComanda"
           class="pagina-centralizada"
@@ -122,14 +131,14 @@ const dadosStatus = status => {
   para consultar os pedidos.
 </p>
       <p
-          v-else-if="pedidosComanda.length === 0"
+          v-else-if="pedidosComanda.length === 0 && !erroPedidosComanda"
           class="texto-secundario"
       >
         Nenhum pedido foi encontrado.
       </p>
 
       <div
-          v-else
+          v-else-if="pedidosComanda.length"
           class="grade-pedidos setor-rolavel" role="region" aria-label="Pedidos da comanda" tabindex="0"
       >
         <Card

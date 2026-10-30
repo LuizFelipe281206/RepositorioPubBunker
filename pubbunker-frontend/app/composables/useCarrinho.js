@@ -9,7 +9,7 @@ export const useCarrinho = () => {
     const { abrirPopup } = usePopup()
 
     const { codigoComanda, tratarAcessoInvalido } = useComanda()
-    const { pedidosComanda } = usePedidosComanda()
+    const { registrarPedido } = usePedidosComanda()
 
     const adicionar = (produto, quantidade = 1, adicionais = []) => {
         if (enviandoPedido.value) return
@@ -81,13 +81,7 @@ export const useCarrinho = () => {
 
             if (codigoSolicitado !== codigoComanda.value) return null
 
-            const pedidoJaExiste = pedidosComanda.value.some(
-                pedido => pedido.id === pedidoCriado.id
-            )
-
-            if (!pedidoJaExiste) {
-                pedidosComanda.value.push(pedidoCriado)
-            }
+            registrarPedido(pedidoCriado)
 
             carrinho.value = []
             observacao.value = ''
